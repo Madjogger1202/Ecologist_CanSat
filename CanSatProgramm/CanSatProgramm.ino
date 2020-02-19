@@ -57,11 +57,11 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
-#include <Adafruit_BMP280.h>
+#include "Adafruit_BMP280.h"
 Adafruit_BMP280 barometr; // объект нашего барометра
 #include "I2Cdev.h"     //Библиотека для работы с I2C устройствами
 #include "MPU6050.h"    //Библиотека для работы с MPU6050
-#include <microDS18B20.h>
+#include "microDS18B20.h"
 MicroDS18B20 temp_sensor(TEMP_PIN); // определяем наш датчик на его пин 
 MPU6050 accelgyro;
 const int chipSelect = 4;
