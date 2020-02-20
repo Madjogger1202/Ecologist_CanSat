@@ -69,7 +69,7 @@ int HeightCalibrate;  // калибровка высоты (корректиро
 int Height;  // текущая высота относительно точки запуска
 float Temp1;  // температура с DS18B20 (основная)
 int Temp2;  // температура с BMP280
-long int Pressure;  // давление с BMP280
+int Pressure;  // давление с BMP280
 /*   переменные для значений с акселерометра    */
 int x_s;  // статичное по X
 int y_s;  // статичное по Y
@@ -80,108 +80,73 @@ int z_a;  // ускорение по Z
 
 void setup() {
   Serial.begin(9600);
+  if()
+  {
+    
+  }
   accelgyro.initialize();  
-  if (!SD.begin(chipSelect)) {
-        Serial.println("Card failed, or not present");
-        return;
-    }
+  
   Serial.println("   /// АППАРАТ ЭКОЛОГ К РАБОТЕ ГОТОВ ///   ");
   Serial.println("   /// ИНИЦИАЛИЗАЦИЯ БАРОМЕТРА...    ///");
-  if (!barometr.begin()) {
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-    while (1);
-  }
-   barometr.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500);
-  Serial.println("   /// ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА.      ///   ");
-  Serial.println("   /// ИНИЦИАЛИЗАЦИЯ ТЕРМОМЕТРА      ///");
-  temp_sensor.requestTemp();
-  Serial.println("   /// ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА       ///   ");
-  Serial.println("   /// ПРОВЕРКА ТЕМПЕРАТУРЫ...       ///");
-  Temp1 = temp_sensor.getTemp();
-  Pressure = barometr.readPressure();
-  Temp2 = barometr.readTemperature();
-  accelgyro.getMotion6(&x_a, &y_a, &z_a, &x_s, &y_s, &z_s); 
-  if((Temp1 <= 40)&(Temp1 >= 0))
-  {
-    Serial.println("   /// ТЕМПЕРАТУРА В НОРМЕ         ///   ");
-  }
-  else
-  {
-    Serial.println("   /// ПРОВЕРЬТЕ ПОДКЛЮЧЕНИЕ ДАТЧИКА, НЕКОРРЕКТНЫЕ ДАННЫЕ ///   ");
-    while((Temp1 > 40)&(Temp1 < 0))
-    {
-      Temp1 = temp_sensor.getTemp();
-    }
-
-  }
-    Serial.print(                     barometr.readPressure());
+  
   delay(100);
 }
 
 void loop() {
+  delay(1000);
+}
+
+
+void SD_write(String dataString)
+{
+   if (dataFile) 
+   {
+      dataFile.println(dataString);
+      dataFile.close();
+   } else 
+   {
+      Serial.println("Ошибка записи!");
+   }
+}
+
+
+void Barometr_settings()
+{
+  barometr.setSampling(Adafruit_BMP280::MODE_NORMAL,     
+                       Adafruit_BMP280::SAMPLING_X2,     
+                       Adafruit_BMP280::SAMPLING_X16,    
+                       Adafruit_BMP280::FILTER_X16,      
+                       Adafruit_BMP280::STANDBY_MS_500);
+}
+void Get_temp_and_pressure()
+{
   temp_sensor.requestTemp();
   Temp1 = temp_sensor.getTemp();
   Pressure = barometr.readPressure();
-  Temp2 = barometr.readTemperature();
-  accelgyro.getMotion6(&x_a, &y_a, &z_a, &x_s, &y_s, &z_s);
-  String dataString = String(Temp1)
-  + ", "
-  + String(Pressure)
-  + ", "
-  + String(x_a)
-  +", "
-  + String(y_a)
-  +", "
-  + String(z_a)+
-  ", "
-  + String(x_s)
-  +", "
-  + String(y_s)+
-  ", "
-  + String(z_s);
-  File dataFile = SD.open("test.txt", FILE_WRITE);
-  if (dataFile) {
-        // записываем строку в файл
-        dataFile.println(dataString);
-        dataFile.close();
-    } else {
-        // выводим ошибку если не удалось открыть файл
-        Serial.println("Ошибка записи!");
+}
+void Get_accel
+{
+  accelgyro.getMotion6(&x_a, &y_a, &z_a, &x_s, &y_s, &z_s); 
+}
+int SD_error()
+{
+  if (!SD.begin(chipSelect)) {
+        Serial.println("Card failed, or not present");
+        return 1;
     }
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.println("");
-  Serial.print("   /// Temperature: ");
-  Serial.print(                     Temp1);
-  Serial.println(                        "               ///");
-  Serial.print("   /// Pressure:    ");
-  Serial.print(                     barometr.readPressure());
-  Serial.println(                       "            ///");
-  Serial.println("   /// Acseleration(x, y, z)            ///");
-  Serial.print("      ");
-  Serial.print(x_a);
-  Serial.print("      ");
-  Serial.print(y_a);
-  Serial.print("      ");
-  Serial.println(z_a);
-  
-  Serial.println("   /// Angle(x, y, z)                   ///");
-  Serial.print("      ");
-  Serial.print(x_s);
-  Serial.print("      ");
-  Serial.print(y_s);
-  Serial.print("      ");
-  Serial.println(z_s);
-
-  delay(1000);
+}
+int BMP_error()
+{
+  if (!barometr.begin()) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
+    while (1);
+  }
+}
+int DS18_error()
+{
+  return(0);
+}
+int NRF_error()
+{
+  return(0);
 }
