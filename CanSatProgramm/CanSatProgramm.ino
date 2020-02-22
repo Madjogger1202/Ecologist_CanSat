@@ -48,7 +48,19 @@
       sd карта: https://robotclass.ru/tutorials/arduin-read-write-micro-sd-card/
       дозиметр: https://cxem.net/dozimetr/3-10.php
 
+      Модули, используемые в тестовой программе:
+      1)Модуль СД карты
+      2)BMP280
+      3)DS18B20
+      4)MPU6050
+      
+      Структура тестовой программы (без отправки по радио)
+      {
+        подключение библиотек
+        инициализация переменных 
 
+
+      }
 
 
 */ 
@@ -80,10 +92,6 @@ int z_a;  // ускорение по Z
 
 void setup() {
   Serial.begin(9600);
-  if()
-  {
-    
-  }
   accelgyro.initialize();  
   
   Serial.println("   /// АППАРАТ ЭКОЛОГ К РАБОТЕ ГОТОВ ///   ");
@@ -121,10 +129,10 @@ void Barometr_settings()
 void Get_temp_and_pressure()
 {
   temp_sensor.requestTemp();
-  Temp1 = temp_sensor.getTemp();
   Pressure = barometr.readPressure();
+  Temp1 = temp_sensor.getTemp();
 }
-void Get_accel
+void Get_accel()
 {
   accelgyro.getMotion6(&x_a, &y_a, &z_a, &x_s, &y_s, &z_s); 
 }
