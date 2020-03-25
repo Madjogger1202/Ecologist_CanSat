@@ -3,8 +3,8 @@
 #include <RF24.h>                                         
                                       
 RF24 radio(10, 9);         
-                                
-long int data[5];                                         // Создаём массив для приёма данных
+int t_n;                                
+long int data[6];                                         // Создаём массив для приёма данных
 
 void setup()
 {
@@ -21,15 +21,18 @@ void loop()
     if(radio.available())
     {                                
        radio.read(&data, sizeof(data));                   // Читаем данные в массив data и указываем сколько байт читать
-       Serial.print("Temperature (ds18b20):");
-       Serial.println(data[1]);
-       Serial.print("Pressure (bmp280):");
-       Serial.println(data[0]);
-       Serial.print("X (adxl345):");
-       Serial.println(data[2]);
-       Serial.print("Y (adxl345):");
-       Serial.println(data[3]);
-       Serial.print("Z (adxl345):");
-       Serial.println(data[4]);
+    //   Serial.print("Temperature (ds18b20):");
+       Serial.println(float(data[1])/10);
+      // Serial.println(float(data[1])/10);
+       //Serial.print("Pressure (bmp280):");
+    //   Serial.println(data[0]);
+     //  Serial.print("Temperature (bmp280):");
+     //  Serial.println(float(data[5])/10);
+    //   Serial.print("X (adxl345):");
+    //   Serial.println(data[2]);
+    //   Serial.print("Y (adxl345):");
+    //   Serial.println(data[3]);
+    //   Serial.print("Z (adxl345):");
+    //   Serial.println(data[4]);
     }
 }
