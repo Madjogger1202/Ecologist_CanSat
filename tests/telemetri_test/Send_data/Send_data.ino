@@ -60,18 +60,17 @@ void loop()
    data[5]=bmp.readTemperature()*10;       // запись в массив телеметрии значений температуры с барометра
    data[1]=t_sensor.getTemp()*10;          // запись в массив телеметрии значений температуры 
  
- //  if(timer == 4) last_temperature = data[1];
- //  if (timer > 4) {
-//    if  ( (( (data[1]>400) || (data[1]< 0) )||(abs(data[1]-last_temperature)>=19))&&(!lst)) {
-//      data[1]=last_temperature;
-//      lst=1;
-//    }
-//    else {
-//    lst=0;
- //   last_temperature=data[1];
- //   }
-   
-//   }
+  if(timer == 4) last_temperature = data[1];
+  if (timer > 4) {
+    if  ( (( (data[1]>400) || (data[1]< 0) )||(abs(data[1]-last_temperature)>=19))&&(!lst)) {
+     data[1]=last_temperature;
+      lst=1;
+    }
+    else {
+    lst=0;
+    last_temperature=data[1];
+   }
+   }
    radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
    t_sensor.requestTemp();                 //  запрос температуры
 
