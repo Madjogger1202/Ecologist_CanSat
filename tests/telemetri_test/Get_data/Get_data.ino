@@ -4,8 +4,17 @@
                                       
 RF24 radio(10, 9);         
 int t_n;                                
-long int data[6];                                         // Создаём массив для приёма данных
+//long int data[6];                                         // Создаём массив для приёма данных
 
+struct telemetry    //Создаем структуру
+{                  
+   float temp_str;      //
+   float bmp_temp_str;  //
+   long int press_str;       //
+   int x_str;           //
+   int y_str;           //
+   int z_str;           //
+}data;
 void setup()
 {
     Serial.begin(9600);                                    
@@ -21,18 +30,17 @@ void loop()
     if(radio.available())
     {                                
        radio.read(&data, sizeof(data));                   // Читаем данные в массив data и указываем сколько байт читать
-    //   Serial.print("Temperature (ds18b20):");
-       Serial.println(float(data[1])/10);
-      // Serial.println(float(data[1])/10);
-       //Serial.print("Pressure (bmp280):");
-    //   Serial.println(data[0]);
-     //  Serial.print("Temperature (bmp280):");
-     //  Serial.println(float(data[5])/10);
-    //   Serial.print("X (adxl345):");
-    //   Serial.println(data[2]);
-    //   Serial.print("Y (adxl345):");
-    //   Serial.println(data[3]);
-    //   Serial.print("Z (adxl345):");
-    //   Serial.println(data[4]);
+       Serial.print("Temperature (ds18b20):");
+       Serial.println(data.temp_str);
+       Serial.print("Pressure (bmp280):");
+       Serial.println(data.press_str*4);
+       Serial.print("Temperature (bmp280):");
+       Serial.println(data.bmp_temp_str);
+       Serial.print("X (adxl345):");
+       Serial.println(data.x_str);
+       Serial.print("Y (adxl345):");
+       Serial.println(data.y_str);
+       Serial.print("Z (adxl345):");
+       Serial.println(data.z_str);
     }
 }

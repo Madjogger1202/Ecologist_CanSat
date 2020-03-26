@@ -21,9 +21,18 @@ ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём 
 long int timer;                                               // переменная для подсчета выполненных циклов программы
 int last_temperature;                                         // переменная для сверки значений с термометра
 bool lst;
-long int data[6];                                             // массив для телеметрии (нужно будет переделать в структуру)
+//long int data[6];                                             // массив для телеметрии (нужно будет переделать в структуру)
 int x,y,z;                                                    // переменные для ускорений по 3 осям
-  
+
+struct telemetry    //Создаем структуру
+{                  
+   float temp_str;      //
+   float bmp_temp_str;  //
+   long int press_str;       //
+   int x_str;           //
+   int y_str;           //
+   int z_str;           //
+}data; 
 void setup(){
    pinMode(Sd_pin, OUTPUT);                                   // настройка chip select катрочки на отправку
    SPI.begin();                                               // инициализируем работу с SPI 
@@ -47,28 +56,35 @@ void setup(){
    adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления
    adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
    t_sensor.requestTemp();             // отправляем запрос на температуру
+//   telemetry data;                     // создаём объект структуры
    delay(1000);                        // задержка для адекватных значений температуры 
 }
 void loop()
 {
 
    adxl.readAccel(&x, &y, &z);             // запись значений для ускорений в указанные переменные
-   data[2]=x;                              /////////////////////////////////////////////
-   data[3]=y;                              //   запись в массив телеметрии ускорений  //
-   data[4]=z;                              /////////////////////////////////////////////
-   data[0]=bmp.readPressure();             // запись в массив телеметрии значений давления 
-   data[5]=bmp.readTemperature()*10;       // запись в массив телеметрии значений температуры с барометра
-   data[1]=t_sensor.getTemp()*10;          // запись в массив телеметрии значений температуры 
+//   data[2]=x;                              /////////////////////////////////////////////
+//   data[3]=y;                              //   запись в массив телеметрии ускорений  //
+//   data[4]=z;                              /////////////////////////////////////////////
+//   data[0]=bmp.readPressure();             // запись в массив телеметрии значений давления 
+//   data[5]=bmp.readTemperature()*10;       // запись в массив телеметрии значений температуры с барометра
+//   data[1]=t_sensor.getTemp()*10;          // запись в массив телеметрии значений температуры 
+   data.temp_str = t_sensor.getTemp();
+   data.bmp_temp_str = bmp.readTemperature();
+   data.press_str = bmp.readPressure()/4; 
+   data.x_str = x;
+   data.y_str = y;
+   data.z_str = z;
  
-  if(timer == 4) last_temperature = data[1];
+  if(timer == 4) last_temperature =  data.temp_str;
   if (timer > 4) {
-    if  ( (( (data[1]>400) || (data[1]< 0) )||(abs(data[1]-last_temperature)>=19))&&(!lst)) {
-     data[1]=last_temperature;
+    if  ( (( ( data.temp_str>400) || ( data.temp_str< 0) )||(abs( data.temp_str-last_temperature)>=19))&&(!lst)) {
+      data.temp_str=last_temperature;
       lst=1;
     }
     else {
     lst=0;
-    last_temperature=data[1];
+    last_temperature= data.temp_str;
    }
    }
    radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
@@ -77,17 +93,17 @@ void loop()
   File dataFile = SD.open("datalog.csv", FILE_WRITE);  // открываем для записи файл, если его нет - создаём
   if (dataFile)                                        // проверка, что пишем не в воздух
   {
-    dataFile.print(data[0]);                   ///////////////////////////  
+    dataFile.print(data.press_str);            ///////////////////////////  
     dataFile.print(", ");                      //
-    dataFile.print(data[1]);                   //
+    dataFile.print(data.temp_str);             //
     dataFile.print(", ");                      //   
-    dataFile.print(data[2]);                   //
+    dataFile.print(data.x_str);                //
     dataFile.print(", ");                      //   запись  телеметрии на сд карту 
-    dataFile.print(data[3]);                   //
+    dataFile.print(data.y_str);                //
     dataFile.print(", ");                      //
-    dataFile.print(data[4]);                   //
+    dataFile.print(data.z_str);                //
     dataFile.print(", ");                      //
-    dataFile.println(data[5]);                 ///////////////////////////    
+    dataFile.println(data.bmp_temp_str);       ///////////////////////////    
     dataFile.close();                          //   для подтверждения записи 
   }
    delay(telemetri_rate);                      // задержка для отправки данных 
