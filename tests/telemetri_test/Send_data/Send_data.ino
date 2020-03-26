@@ -20,18 +20,17 @@ ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём 
 
 long int timer;                                               // переменная для подсчета выполненных циклов программы
 int last_temperature;                                         // переменная для сверки значений с термометра
-bool lst;
-//long int data[6];                                             // массив для телеметрии (нужно будет переделать в структуру)
+bool lst;                                                     // флаг для обработки ошибок
 int x,y,z;                                                    // переменные для ускорений по 3 осям
 
-struct telemetry    //Создаем структуру
+struct telemetry        //Создаем структуру
 {                  
-   float temp_str;      //
-   float bmp_temp_str;  //
-   long int press_str;       //
-   int x_str;           //
-   int y_str;           //
-   int z_str;           //
+   float temp_str;      // переменная для температуры
+   float bmp_temp_str;  // переменная для температуры с барометра
+   long int press_str;  // переменная для давления с барометра
+   int x_str;           ////////////////////////////////////////////////
+   int y_str;           //  переменные для ускорений с акселерометра  //
+   int z_str;           ////////////////////////////////////////////////
 }data; 
 void setup(){
    pinMode(Sd_pin, OUTPUT);                                   // настройка chip select катрочки на отправку
@@ -56,37 +55,33 @@ void setup(){
    adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления
    adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
    t_sensor.requestTemp();             // отправляем запрос на температуру
-//   telemetry data;                     // создаём объект структуры
    delay(1000);                        // задержка для адекватных значений температуры 
 }
 void loop()
 {
 
-   adxl.readAccel(&x, &y, &z);             // запись значений для ускорений в указанные переменные
-//   data[2]=x;                              /////////////////////////////////////////////
-//   data[3]=y;                              //   запись в массив телеметрии ускорений  //
-//   data[4]=z;                              /////////////////////////////////////////////
-//   data[0]=bmp.readPressure();             // запись в массив телеметрии значений давления 
-//   data[5]=bmp.readTemperature()*10;       // запись в массив телеметрии значений температуры с барометра
-//   data[1]=t_sensor.getTemp()*10;          // запись в массив телеметрии значений температуры 
-   data.temp_str = t_sensor.getTemp();
-   data.bmp_temp_str = bmp.readTemperature();
-   data.press_str = bmp.readPressure()/4; 
-   data.x_str = x;
-   data.y_str = y;
-   data.z_str = z;
+   adxl.readAccel(&x, &y, &z);                  // запись значений для ускорений в указанные переменные
+   data.temp_str = t_sensor.getTemp();          // запись в структурную переменную телеметрии значений температуры
+   data.bmp_temp_str = bmp.readTemperature();   // запись в структурную переменную телеметрии значений температуры с барометра
+   data.press_str = bmp.readPressure()/4;       // запись в структурную переменную телеметрии значений температуры с барометра
+   data.x_str = x;                              /////////////////////////////////////////////////////////////
+   data.y_str = y;                              //   запись в структурную переменную телеметрии ускорений  //
+   data.z_str = z;                              /////////////////////////////////////////////////////////////
+   
+ //////////////////////////// обработка багов термометра ///////////////////////////////////////////////////////////////////
+  if(timer == 4) last_temperature =  data.temp_str;                                                                       //
+  if (timer > 4) {                                                                                                        //  
+    if  ( (( ( data.temp_str>400) || ( data.temp_str< 0) )||(abs( data.temp_str-last_temperature)>=19))&&(!lst)) {        //
+      data.temp_str=last_temperature;                                                                                     //
+      lst=1;                                                                                                              //
+    }                                                                                                                     //
+    else {                                                                                                                //
+    lst=0;                                                                                                                //
+    last_temperature= data.temp_str;                                                                                      //
+   }                                                                                                                      //
+   }                                                                                                                      //
+ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  
-  if(timer == 4) last_temperature =  data.temp_str;
-  if (timer > 4) {
-    if  ( (( ( data.temp_str>400) || ( data.temp_str< 0) )||(abs( data.temp_str-last_temperature)>=19))&&(!lst)) {
-      data.temp_str=last_temperature;
-      lst=1;
-    }
-    else {
-    lst=0;
-    last_temperature= data.temp_str;
-   }
-   }
    radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
    t_sensor.requestTemp();                 //  запрос температуры
 
@@ -104,7 +99,7 @@ void loop()
     dataFile.print(data.z_str);                //
     dataFile.print(", ");                      //
     dataFile.println(data.bmp_temp_str);       ///////////////////////////    
-    dataFile.close();                          //   для подтверждения записи 
+    dataFile.close();                          // для подтверждения записи 
   }
    delay(telemetri_rate);                      // задержка для отправки данных 
    timer++;                                    // + 1 выполненный цикл
