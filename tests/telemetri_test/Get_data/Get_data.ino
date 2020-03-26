@@ -3,18 +3,16 @@
 #include <RF24.h>                                         
                                       
 RF24 radio(10, 9);         
-int t_n;                                
-//long int data[6];                                         // Создаём массив для приёма данных
-
-struct telemetry    //Создаем структуру
+                              
+struct telemetry        //Создаем структуру
 {                  
-   float temp_str;      //
-   float bmp_temp_str;  //
-   long int press_str;       //
-   int x_str;           //
-   int y_str;           //
-   int z_str;           //
-}data;
+   float temp_str;      // переменная для температуры
+   float bmp_temp_str;  // переменная для температуры с барометра
+   long int press_str;  // переменная для давления с барометра
+   int x_str;           ////////////////////////////////////////////////
+   int y_str;           //  переменные для ускорений с акселерометра  //
+   int z_str;           ////////////////////////////////////////////////
+}data; 
 void setup()
 {
     Serial.begin(9600);                                    
@@ -29,18 +27,18 @@ void loop()
 {
     if(radio.available())
     {                                
-       radio.read(&data, sizeof(data));                   // Читаем данные в массив data и указываем сколько байт читать
-       Serial.print("Temperature (ds18b20):");
-       Serial.println(data.temp_str);
-       Serial.print("Pressure (bmp280):");
-       Serial.println(data.press_str*4);
-       Serial.print("Temperature (bmp280):");
-       Serial.println(data.bmp_temp_str);
-       Serial.print("X (adxl345):");
-       Serial.println(data.x_str);
-       Serial.print("Y (adxl345):");
-       Serial.println(data.y_str);
-       Serial.print("Z (adxl345):");
-       Serial.println(data.z_str);
+       radio.read(&data, sizeof(data));                   // читаем данные и указываем сколько байт читать
+       Serial.print("Temperature (ds18b20):");            // 
+       Serial.println(data.temp_str);                     // пишем в порт температуру 
+       Serial.print("Pressure (bmp280):");                // 
+       Serial.println(data.press_str*4);                  // пишем в порт давление с барометра
+       Serial.print("Temperature (bmp280):");             //
+       Serial.println(data.bmp_temp_str);                 // пишем в порт температуру с барометра
+       Serial.print("X (adxl345):");                      //
+       Serial.println(data.x_str);                        // пишем в порт ускорение по оси X
+       Serial.print("Y (adxl345):");                      // 
+       Serial.println(data.y_str);                        // пишем в порт ускорение по оси Y
+       Serial.print("Z (adxl345):");                      //
+       Serial.println(data.z_str);                        // пишем в порт ускорение по оси Z
     }
 }
