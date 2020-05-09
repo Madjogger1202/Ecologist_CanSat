@@ -38,7 +38,7 @@ void loop()
       if(digitalRead(test_1))
       {
       Serial.print("$");
-      Serial.println(data.press_str*4); // в паскалях
+      Serial.println(data.press_str*2); // в паскалях
       Serial.print(";");
       }
       else if(digitalRead(test_2))

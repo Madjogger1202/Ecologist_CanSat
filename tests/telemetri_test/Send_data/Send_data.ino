@@ -2,12 +2,12 @@
 #define Radio_CSN 41     //41             // пин chip select для радио
 #define Acsel_pin 43                  // пин chip select для акселерометра
 #define Temperature_pin 42            // пин chip select для термометра
-#define Pressure_pin 44               // пин chip select для баометра
+#define Pressure_pin 44               // пин chip select для барометра
 #define Sd_pin 39                     // пин chip select для SD карты
 
 #define telemetri_rate 300 // задержка между отправкой пакетов, задаётся в милисекундах 
 
-#include "microDS18B20.h"
+#include <OneWire.h>
 #include "Adafruit_BMP280.h"
 #include "SparkFun_ADXL345.h"   
 #include <nRF24L01.h>                                    
@@ -15,12 +15,13 @@
 #include <SD.h>
 RF24 radio(Radio_CE, Radio_CSN);                              // Создаём объект radio для работы с библиотекой RF24, указывая номера выводов nRF24L01+ (CE, CSN)
 Adafruit_BMP280 bmp(Pressure_pin);                            // создаём объект bmp для работы с барометром
-MicroDS18B20 t_sensor(Temperature_pin);                       // создаём объект t_sensor для работы с термометром
+OneWire  ds(Temperature_pin);                                 // создаём объект t_sensor для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём объект adxl для работы с акселерометром
 
 int last_temperature;                                         // переменная для сверки значений с термометра
 bool lst;                                                     // флаг для обработки ошибок
 int x,y,z;                                                    // переменные для ускорений по 3 осям
+bool ready_t, ready_t_f;
 
 struct telemetry        //Создаем структуру
 {                  
@@ -54,36 +55,69 @@ void setup(){
 
    adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления
    adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
-   t_sensor.requestTemp();             // отправляем запрос на температуру
    delay(1000);                        // задержка для адекватных значений температуры 
 }
 void loop()
-{
+{ 
+  byte i;
+   byte present = 0;
+   byte type_s;
+   byte data2[12];
+   byte addr[8];
+  if(ready_t)
+  {
+   if ( !ds.search(addr)) {
+    Serial.println("No more addresses.");
+    Serial.println();
+    ds.reset_search();
+    delay(250);
+    return;
+  }
+    if (OneWire::crc8(addr, 7) != addr[7]) {
+      Serial.println("CRC is not valid!");
+      return;
+  }
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44, 1);      
+  }
+  if(ready_t_f)
+  {
+    present = ds.reset();
+    ds.select(addr);    
+    ds.write(0xBE);  
+    for ( i = 0; i < 9; i++) 
+    { 
+      data2[i] = ds.read(); 
+    }
+     int16_t raw = (data[1] << 8) | data[0];
+  if (type_s) {
+    raw = raw << 3; // 9 bit resolution default
+    if (data[7] == 0x10) {
+      // "count remain" gives full 12 bit resolution
+      raw = (raw & 0xFFF0) + 12 - data[6];
+    }
+  } else {
+    byte cfg = (data[4] & 0x60);
+    // at lower res, the low bits are undefined, so let's zero them
+    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
+    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
+    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
+    //// default is 12 bit resolution, 750 ms conversion time
+  }
+  data.temp_str = (float)raw / 16.0;
+    
+  }
 
    adxl.readAccel(&x, &y, &z);                  // запись значений для ускорений в указанные переменные
-   data.temp_str = t_sensor.getTemp();          // запись в структурную переменную телеметрии значений температуры
+//   data.temp_str = t_sensor.getTemp();          // запись в структурную переменную телеметрии значений температуры
    data.bmp_temp_str = bmp.readTemperature();   // запись в структурную переменную телеметрии значений температуры с барометра
-   data.press_str = bmp.readPressure()/4;       // запись в структурную переменную телеметрии значений температуры с барометра
+   data.press_str = bmp.readPressure()/2;       // запись в структурную переменную телеметрии значений температуры с барометра
    data.x_str = x;                              /////////////////////////////////////////////////////////////
    data.y_str = y;                              //   запись в структурную переменную телеметрии ускорений  //
-   data.z_str = z;                              /////////////////////////////////////////////////////////////
-   
- //////////////////////////// обработка багов термометра ///////////////////////////////////////////////////////////////////
-  if(data.timer == 4) last_temperature =  data.temp_str;                                                                       //
-  if (data.timer > 4) {                                                                                                        //  
-    if  ( (( ( data.temp_str>400) || ( data.temp_str< 0) )||(abs( data.temp_str-last_temperature)>=19))&&(!lst)) {        //
-      data.temp_str=last_temperature;                                                                                     //
-      lst=1;                                                                                                              //
-    }                                                                                                                     //
-    else {                                                                                                                //
-    lst=0;                                                                                                                //
-    last_temperature= data.temp_str;                                                                                      //
-   }                                                                                                                      //
-  }                                                                                                                      //
- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
+   data.z_str = z;                              ///////////////////////////////////////////////////////////// 
    radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
-   t_sensor.requestTemp();                 //  запрос температуры
+//   t_sensor.requestTemp();                 //  запрос температуры
 
   File dataFile = SD.open("datalog.csv", FILE_WRITE);  // открываем для записи файл, если его нет - создаём
   if (dataFile)                                        // проверка, что пишем не в воздух
