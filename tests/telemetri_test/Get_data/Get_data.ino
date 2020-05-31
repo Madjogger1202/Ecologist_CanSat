@@ -12,7 +12,8 @@ struct telemetry        //Создаем структуру
    int x_str;           ////////////////////////////////////////////////
    int y_str;           //  переменные для ускорений с акселерометра  //
    int z_str;           ////////////////////////////////////////////////
-}data; 
+   long int timer;      // переменная для подсчета выполненных циклов программы
+}data;  
 void setup()
 {
     Serial.begin(115200);                                    
@@ -28,28 +29,24 @@ void loop()
     if(radio.available())
     {                                
        radio.read(&data, sizeof(data));                   // читаем данные и указываем сколько байт читать
-    //   Serial.print("Temperature (ds18b20):");            // 
-    //   Serial.println(data.temp_str);                     // пишем в порт температуру 
-   //    Serial.print("Pressure (bmp280):");                // 
-  //     Serial.println(data.press_str*4);                  // пишем в порт давление с барометра
- //      Serial.print("Temperature (bmp280):");             //
-       Serial.print("$");
-       Serial.println(data.press_str*4); 
-   //     Serial.println(data.press_str*4); 
-   //    Serial.print(data.bmp_temp_str);                 // пишем в порт температуру с барометра
-  //     Serial.print("X (adxl345):");                      //
-     //  Serial.print(" ");                      //
-   //   Serial.println(data.x_str*3);  
-  //    Serial.print(" ");  // пишем в порт ускорение по оси X
-   //    Serial.print("Y (adxl345):");                      //   
-  //    Serial.println(data.y_str*3);  
-  //    Serial.print(" ");  // пишем в порт ускорение по оси Y
-   //    Serial.print("Z (adxl345):");                      //
-  //     Serial.println(data.z_str*3);                        // пишем в порт ускорение по оси Z
-    //   Serial.println("");                        // пишем в порт ускорение по оси Z
-   //    Serial.println("");    
-   //    Serial.println("");    
-     //  Serial.println("");    
-      Serial.print(";");    
+       Serial.print("Temperature (ds18b20):");            // 
+       Serial.println(data.temp_str);                     // пишем в порт температуру 
+       Serial.print("Pressure (bmp280):");                // 
+       Serial.println(data.press_str*2);                  // пишем в порт давление с барометра
+       Serial.print("Temperature (bmp280):");             //
+       Serial.print(data.bmp_temp_str);                 // пишем в порт температуру с барометра
+       Serial.print("X (adxl345):");                      //
+       Serial.print(" ");                      //
+       Serial.println(data.x_str*3);  
+       Serial.print(" ");  // пишем в порт ускорение по оси X
+       Serial.print("Y (adxl345):");                      //   
+       Serial.println(data.y_str*3);  
+       Serial.print(" ");  // пишем в порт ускорение по оси Y
+       Serial.print("Z (adxl345):");                      //
+       Serial.println(data.z_str*3);                        // пишем в порт ускорение по оси Z
+       Serial.println("");                        // пишем в порт ускорение по оси Z
+       Serial.println("");    
+       Serial.println("");    
+       Serial.println("");       
     }
 }

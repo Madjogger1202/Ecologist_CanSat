@@ -1,5 +1,5 @@
-#define Radio_CE 40  //40                 // пин chip enable для радио
-#define Radio_CSN 41     //41             // пин chip select для радио
+#define Radio_CE 12  //40                 // пин chip enable для радио
+#define Radio_CSN 13     //41             // пин chip select для радио
 #define Acsel_pin 43                  // пин chip select для акселерометра
 #define Temperature_pin 42            // пин chip select для термометра
 #define Pressure_pin 44               // пин chip select для барометра
@@ -10,10 +10,10 @@
 #include <OneWire.h>
 #include "Adafruit_BMP280.h"
 #include "SparkFun_ADXL345.h"   
-//#include <nRF24L01.h>                                    
-//#include <RF24.h>  
+#include <nRF24L01.h>                                    
+#include <RF24.h>  
 //#include <SD.h>
-//RF24 radio(Radio_CE, Radio_CSN);                              // Создаём объект radio для работы с библиотекой RF24, указывая номера выводов nRF24L01+ (CE, CSN)
+RF24 radio(Radio_CE, Radio_CSN);                              // Создаём объект radio для работы с библиотекой RF24, указывая номера выводов nRF24L01+ (CE, CSN)
 Adafruit_BMP280 bmp(Pressure_pin);                            // создаём объект bmp для работы с барометром
 OneWire  ds(42);                                 // создаём объект t_sensor для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём объект adxl для работы с акселерометром
@@ -40,11 +40,11 @@ void setup(){
    SPI.setDataMode(SPI_MODE3);                                // насотройка SPI
 //   SD.begin(Sd_pin);                                          // инициализация sd карты 
    delay(100);                                                // задержка для уверенности в успешности инициализации 
-//   radio.begin();                                             // Инициируем работу nRF24L01+
- //  radio.setChannel(120);                                     // Указываем канал передачи данных (от 0 до 127), 5 - значит передача данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
- //  radio.setDataRate(RF24_250KBPS);                             // Указываем скорость передачи данных (RF24_250KBPS, RF24_1MBPS, RF24_2MBPS), RF24_1MBPS - 1Мбит/сек
- //  radio.setPALevel(RF24_PA_HIGH);                            // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
- //  radio.openWritingPipe(0x1234567899LL);                     // Открываем трубу с идентификатором 0x1234567890 для передачи данных (на одном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)           
+   radio.begin();                                             // Инициируем работу nRF24L01+
+   radio.setChannel(120);                                     // Указываем канал передачи данных (от 0 до 127), 5 - значит передача данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
+   radio.setDataRate(RF24_250KBPS);                             // Указываем скорость передачи данных (RF24_250KBPS, RF24_1MBPS, RF24_2MBPS), RF24_1MBPS - 1Мбит/сек
+   radio.setPALevel(RF24_PA_HIGH);                            // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
+   radio.openWritingPipe(0x1234567899LL);                     // Открываем трубу с идентификатором 0x1234567890 для передачи данных (на одном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)           
    
    
    bmp.begin();
@@ -119,7 +119,7 @@ void loop()
    data.x_str = x;                              /////////////////////////////////////////////////////////////
    data.y_str = y;                              //   запись в структурную переменную телеметрии ускорений  //
    data.z_str = z;                              ///////////////////////////////////////////////////////////// 
- //  radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
+   radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
 //   t_sensor.requestTemp();                 //  запрос температуры
 
  // File dataFile = SD.open("datalog.csv", FILE_WRITE);  // открываем для записи файл, если его нет - создаём

@@ -11,11 +11,12 @@ struct telemetry        //Создаем структуру
    int x_str;           ////////////////////////////////////////////////
    int y_str;           //  переменные для ускорений с акселерометра  //
    int z_str;           ////////////////////////////////////////////////
-}data;
+   long int timer;      // переменная для подсчета выполненных циклов программы
+}data;  
  // всего тестов :  1)давление для bmp280 2) температура для ds18b20 и bmp280 3) ускорения для adxl 
- #define test_1 11
- #define test_2 12
- #define test_3 13
+ #define test_1 3
+ #define test_2 4
+ #define test_3 5
  
 void setup()
 {
@@ -35,13 +36,13 @@ void loop()
     if(radio.available())
     {                                
       radio.read(&data, sizeof(data));                   // читаем данные и указываем сколько байт читать
-      if(digitalRead(test_1))
+      if(!digitalRead(test_1))
       {
       Serial.print("$");
       Serial.println(data.press_str*2); // в паскалях
       Serial.print(";");
       }
-      else if(digitalRead(test_2))
+      else if(!digitalRead(test_2))
       {
       Serial.print("$");
       Serial.println(data.temp_str); // в градусах 
@@ -49,7 +50,7 @@ void loop()
       Serial.println(data.bmp_temp_str); // в градусах
       Serial.print(";");
       }
-      else if(digitalRead(test_3))
+      else if(!digitalRead(test_3))
       {
       Serial.print("$");
       Serial.println(data.x_str/3.3); // в м/с2 
