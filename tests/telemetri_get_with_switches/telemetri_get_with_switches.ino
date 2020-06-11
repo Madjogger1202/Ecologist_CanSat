@@ -1,7 +1,8 @@
 #include <SPI.h>                                       
 #include <nRF24L01.h>                                     
-#include <RF24.h>                                         
-                                      
+#include <RF24.h>           
+#include <SerialFlow.h>                  
+ //   SerialFlow rd(&Serial); // RX, TX                                  
 RF24 radio(10, 9);                                  
 struct telemetry        //Создаем структуру
 {                  
@@ -21,6 +22,8 @@ struct telemetry        //Создаем структуру
  
 void setup()
 {
+ // rd.setPacketFormat(2, 3, 0);
+    //rd.begin(115200);
     pinMode(test_1, INPUT_PULLUP);
     pinMode(test_2, INPUT_PULLUP);
     pinMode(test_3, INPUT_PULLUP);
@@ -39,27 +42,31 @@ void loop()
       radio.read(&data, sizeof(data));                   // читаем данные и указываем сколько байт читать
       if(!digitalRead(test_1))
       {
-      Serial.print("$");
+   //   Serial.print("$");
       Serial.println(data.press_strp1*1000+data.press_strp2); // в паскалях
-      Serial.print(";");
+  //    Serial.print(";");
       }
       else if(!digitalRead(test_2))
       {
-      Serial.print("$");
+   //   Serial.print("$");
       Serial.println(data.temp_str); // в градусах 
-      Serial.println(" "); 
+  //    Serial.println(" "); 
       Serial.println(data.bmp_temp_str); // в градусах
-      Serial.print(";");
+   //   Serial.print(";");
       }
       else if(!digitalRead(test_3))
       {
-      Serial.print("$");
-      Serial.println(data.x_str/3.3); // в м/с2 
-      Serial.println(" "); 
-      Serial.println(data.y_str/3.3); // в м/с2 
-      Serial.println(" "); 
-      Serial.println(data.z_str/3.3); // в м/с2 
-      Serial.print(";");
+  //    Serial.print("$");
+    //  Serial.println(data.x_str/3.26197); // в м/с2 
+    //  Serial.println(" "); 
+  //    Serial.println(data.y_str/3.26197); // в м/с2 
+   //   Serial.println(" "); 
+   //   Serial.println(data.z_str/3.26197); // в м/с2 
+  //    Serial.print(";");
+  //    rd.setPacketValue( data.x_str/3.26197 );
+  //  rd.setPacketValue(data.y_str/3.26197 );
+ //   rd.setPacketValue( data.z_str/3.26197 );
+ //   rd.sendPacket();
       }   
     }
 }

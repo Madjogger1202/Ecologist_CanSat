@@ -44,6 +44,7 @@ struct telemetry        //Создаем структуру
   byte addr[8];
   float celsius, fahrenheit;
 
+
 void setup() {
   Serial.begin(115200);
   //  pinMode(Sd_pin, OUTPUT);                                   // настройка chip select катрочки на отправку
@@ -68,17 +69,17 @@ void setup() {
   adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления
   adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
   delay(1000);                        // задержка для адекватных значений температуры
+  if ( !ds.search(addr)) {
+  Serial.println();
+  ds.reset_search();
+  delay(250);
+  return;
+    }
 }
 void loop()
 {
   if ((data.timer%3 == 0))
   {
-    if ( !ds.search(addr)) {
-      Serial.println();
-      ds.reset_search();
-      delay(250);
-      return;
-    }
     false_crc = 0;
     if (OneWire::crc8(addr, 7) != addr[7]) {
       Serial.println("CRC is not valid!");
