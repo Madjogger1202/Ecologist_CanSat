@@ -7,7 +7,8 @@ struct telemetry        //Создаем структуру
 {                  
    float temp_str;      // переменная для температуры
    float bmp_temp_str;  // переменная для температуры с барометра
-   long int press_str;  // переменная для давления с барометра
+   long int press_strp1;  // переменная для давления с барометра
+   float press_strp2;  // переменная для давления с барометра
    int x_str;           ////////////////////////////////////////////////
    int y_str;           //  переменные для ускорений с акселерометра  //
    int z_str;           ////////////////////////////////////////////////
@@ -39,7 +40,7 @@ void loop()
       if(!digitalRead(test_1))
       {
       Serial.print("$");
-      Serial.println(data.press_str*2); // в паскалях
+      Serial.println(data.press_strp1*1000+data.press_strp2); // в паскалях
       Serial.print(";");
       }
       else if(!digitalRead(test_2))
