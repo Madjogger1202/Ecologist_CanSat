@@ -5,52 +5,44 @@
 #define Pressure_pin 44               // пин chip select для барометра
 #define Sd_pin 39                     // пин chip select для SD карты
 
+#define OW_SKIP_ROM 0xCC                // Пропуск этапа адресации на шине 
+#define OW_DS18B20_CONVERT_T 0x44       // Команда на начало замера
+#define OW_DS18B20_READ_SCRATCHPAD 0xBE // Чтение скратчпада ds18b20
+#define DS18B20_SCRATCHPAD_SIZE 9       // Размер скратчпада ds18b20
+
 #define telemetri_rate 250 // задержка между отправкой пакетов, задаётся в милисекундах 
 
 #include <OneWire.h>
+#include <string.h>  // для memcpy
+#include <stdint.h>  // для int8_t, uint8_t и т.п.
 #include "Adafruit_BMP280.h"
 #include "SparkFun_ADXL345.h"
 #include <nRF24L01.h>
 #include <RF24.h>
-//#include <SD.h>
 RF24 radio(Radio_CE, Radio_CSN);                              // Создаём объект radio для работы с библиотекой RF24, указывая номера выводов nRF24L01+ (CE, CSN)
 Adafruit_BMP280 bmp(Pressure_pin);                            // создаём объект bmp для работы с барометром
-OneWire  ds(42);                                 // создаём объект t_sensor для работы с термометром
+OneWire  ds(42);                                              // создаём объект ds для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём объект adxl для работы с акселерометром
 
-float last_temperature;                                         // переменная для сверки значений с термометра
-bool lst;                                                     // флаг для обработки ошибок
+float last_temperature;                                       // переменная для сверки значений с термометра
 int x, y, z;                                                  // переменные для ускорений по 3 осям
-bool ready_t, ready_t_f;
-bool false_crc;
-bool ready_step1, ready_step2;
 
-struct telemetry        //Создаем структуру
+struct telemetry       //Создаем структуру
 {
   float temp_str;      // переменная для температуры
   float bmp_temp_str;  // переменная для температуры с барометра
-  long int press_strp1;  // переменная для давления с барометра
-  float press_strp2;  // переменная для давления с барометра
+  float press_str;  // переменная для давления с барометра
   int x_str;           ////////////////////////////////////////////////
   int y_str;           //  переменные для ускорений с акселерометра  //
   int z_str;           ////////////////////////////////////////////////
-  long int timer;      // переменная для подсчета выполненных циклов программы
+  uint32_t timer;      // переменная для подсчета выполненных циклов программы
 } data;
-
-  byte i;
-  byte present = 0;
-  byte type_s;
-  byte data2[12];
-  byte addr[8];
-  float celsius, fahrenheit;
 
 
 void setup() {
   Serial.begin(115200);
-  //  pinMode(Sd_pin, OUTPUT);                                   // настройка chip select катрочки на отправку
   SPI.begin();                                               // инициализируем работу с SPI
   SPI.setDataMode(SPI_MODE3);                                // насотройка SPI
-  //   SD.begin(Sd_pin);                                          // инициализация sd карты
   delay(100);                                                // задержка для уверенности в успешности инициализации
   radio.begin();                                             // Инициируем работу nRF24L01+
   radio.setChannel(120);                                     // Указываем канал передачи данных (от 0 до 127), 5 - значит передача данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
@@ -68,79 +60,69 @@ void setup() {
 
   adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления
   adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
-  delay(1000);                        // задержка для адекватных значений температуры
-  if ( !ds.search(addr)) {
-  Serial.println();
-  ds.reset_search();
-  delay(250);
-  return;
-    }
+  delay(1000);                     
 }
 void loop()
 {
-  if ((data.timer%3 == 0))
+  if ((data.timer % 3 == 0))
   {
-    false_crc = 0;
-    if (OneWire::crc8(addr, 7) != addr[7]) {
-      Serial.println("CRC is not valid!");
-      false_crc++;
+    if (data.timer != 0)
+    {
+      float temp;
+      if(ds18b20_read_t(temp));
+      data.temp_str = temp;
     }
-
-    ds.reset();
-    ds.select(addr);
-    ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-    ready_step2 = 1;
+    ds18b20_convert_t();
   }
- // delay(1000);     // maybe 750ms is enough, maybe not
-if((ready_step2)&&(data.timer%4 == 0)&&(!false_crc)&&(data.timer!=0))
-{
-  present = ds.reset();
-  ds.select(addr);
-  ds.write(0xBE);         // Read Scratchpad
-  for ( i = 0; i < 9; i++) {           // we need 9 bytes
-    data2[i] = ds.read();
-  }
-  int16_t raw = (data2[1] << 8) | data2[0];
-  if (type_s) {
-    raw = raw << 3; // 9 bit resolution default
-    if (data2[7] == 0x10) {
-      // "count remain" gives full 12 bit resolution
-      raw = (raw & 0xFFF0) + 12 - data2[6];
-    }
-  } else {
-    byte cfg = (data2[4] & 0x60);
-    // at lower res, the low bits are undefined, so let's zero them
-    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
-    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
-    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
-    //// default is 12 bit resolution, 750 ms conversion time
-  }
-  data.temp_str = (float)raw / 16.0;
-  ready_step2 = 0;
-}
 
 
   adxl.readAccel(&x, &y, &z);                  // запись значений для ускорений в указанные переменные
   data.bmp_temp_str = bmp.readTemperature();   // запись в структурную переменную телеметрии значений температуры с барометра
-  long int prss = bmp.readPressure();
-  data.press_strp1 = prss/1000;     // запись в структурную переменную телеметрии значений температуры с барометра
-  data.press_strp2 = prss%1000;
+  data.press_str = bmp.readPressure();
   data.x_str = x;                              /////////////////////////////////////////////////////////////
   data.y_str = y;                              //   запись в структурную переменную телеметрии ускорений  //
   data.z_str = z;                              /////////////////////////////////////////////////////////////
-  radio.write(&data, sizeof(data));       //  отправка в эфир пакета данных
-  
-  Serial.println(float(data.press_strp1*1000+data.press_strp2));          ///////////////////////////
-  Serial.print(", ");                      //
-  Serial.print(data.temp_str);             //
-  Serial.print(", ");                      //
-  Serial.print(data.x_str);                //
-  Serial.print(", ");                      //   запись  телеметрии на сд карту
-  Serial.print(data.y_str);                //
-  Serial.print(", ");                      //
-  Serial.print(data.z_str);                //
-  Serial.print(", ");                      //
-  Serial.println(data.bmp_temp_str);
-  delay(telemetri_rate);                      // задержка для отправки данных
-  data.timer++;                                    // + 1 выполненный цикл
+  radio.write(&data, sizeof(data));            // отправка в эфир пакета данных
+  delay(telemetri_rate);                       // задержка для отправки данных
+  data.timer++;                               // + 1 выполненный цикл
+}
+
+bool ds18b20_convert_t()
+{
+
+  if (!ds.reset()) // даем reset на шину
+  {
+    return false;
+  }
+  ds.write(OW_SKIP_ROM, 1);
+  ds.write(OW_DS18B20_CONVERT_T, 1);
+  return true;
+}
+
+bool ds18b20_read_t(float & temperatur)
+{
+
+  if (!ds.reset()) // даем резет на шину
+    return false;
+
+  ds.write(OW_SKIP_ROM, 1); // Пропускаем этап адресации
+  uint8_t scratchpad[DS18B20_SCRATCHPAD_SIZE];
+  ds.write(OW_DS18B20_READ_SCRATCHPAD, 1);
+  ds.read_bytes(scratchpad, sizeof(scratchpad));
+  uint8_t crc_actual = scratchpad[DS18B20_SCRATCHPAD_SIZE - 1]; // Берем контрольную сумму, которую насчитал у себя датчик и положил в последний байт скратчпада
+  uint8_t crc_calculated = OneWire::crc8(scratchpad, DS18B20_SCRATCHPAD_SIZE - 1); // Считаем сами по всем байтам скратчпада кроме последнего
+  float temp;
+  if (crc_calculated != crc_actual)
+  {
+    temperatur = last_temperature;
+    return false;
+  }
+  uint16_t uraw_temp;
+  uraw_temp = scratchpad[0] | (static_cast<uint16_t>(scratchpad[1]) << 8);
+  int16_t raw_temp;
+  memcpy(&raw_temp, &uraw_temp, sizeof(raw_temp));
+  temp = raw_temp / 16.f;
+  last_temperature = temp;
+  temperatur = temp;
+  return true;
 }

@@ -8,12 +8,11 @@ struct telemetry        //Создаем структуру
 {                  
    float temp_str;      // переменная для температуры
    float bmp_temp_str;  // переменная для температуры с барометра
-   long int press_strp1;  // переменная для давления с барометра
-   float press_strp2;  // переменная для давления с барометра
+   float press_str;  // переменная для давления с барометра
    int x_str;           ////////////////////////////////////////////////
    int y_str;           //  переменные для ускорений с акселерометра  //
    int z_str;           ////////////////////////////////////////////////
-   long int timer;      // переменная для подсчета выполненных циклов программы
+   uint32_t timer;      // переменная для подсчета выполненных циклов программы
 }data;  
  // всего тестов :  1)давление для bmp280 2) температура для ds18b20 и bmp280 3) ускорения для adxl 
  #define test_1 3
@@ -43,7 +42,7 @@ void loop()
       if(!digitalRead(test_1))
       {
    //   Serial.print("$");
-      Serial.println(data.press_strp1*1000+data.press_strp2); // в паскалях
+      Serial.println(data.press_str); // в паскалях
   //    Serial.print(";");
       }
       else if(!digitalRead(test_2))

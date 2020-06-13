@@ -173,8 +173,7 @@ void Adafruit_BMP280::write8(byte reg, byte value) {
     digitalWrite(_cs, HIGH);
     if (_sck == -1)
       _spi->endTransaction(); // release the SPI bus
-  }
-}
+  }}
 
 /*!
  *  @brief  Reads an 8 bit value over I2C/SPI
