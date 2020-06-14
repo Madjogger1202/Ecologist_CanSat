@@ -15,6 +15,7 @@
 #include <OneWire.h>
 #include <string.h>  // для memcpy
 #include <stdint.h>  // для int8_t, uint8_t и т.п.
+#include <math.h> // для NAN
 #include "Adafruit_BMP280.h"
 #include "SparkFun_ADXL345.h"
 #include <nRF24L01.h>
@@ -24,7 +25,6 @@ Adafruit_BMP280 bmp(Pressure_pin);                            // создаём 
 OneWire  ds(42);                                              // создаём объект ds для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);                            // создаём объект adxl для работы с акселерометром
 
-float last_temperature;                                       // переменная для сверки значений с термометра
 int x, y, z;                                                  // переменные для ускорений по 3 осям
 
 struct telemetry       //Создаем структуру
@@ -70,7 +70,9 @@ void loop()
     {
       float temp;
       if(ds18b20_read_t(temp));
-      data.temp_str = temp;
+        data.temp_str = temp;
+      else
+        data.temp_str = NAN;
     }
     ds18b20_convert_t();
   }
@@ -114,7 +116,6 @@ bool ds18b20_read_t(float & temperatur)
   float temp;
   if (crc_calculated != crc_actual)
   {
-    temperatur = last_temperature;
     return false;
   }
   uint16_t uraw_temp;
@@ -122,7 +123,6 @@ bool ds18b20_read_t(float & temperatur)
   int16_t raw_temp;
   memcpy(&raw_temp, &uraw_temp, sizeof(raw_temp));
   temp = raw_temp / 16.f;
-  last_temperature = temp;
   temperatur = temp;
   return true;
 }
