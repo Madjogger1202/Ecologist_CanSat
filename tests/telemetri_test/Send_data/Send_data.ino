@@ -69,7 +69,7 @@ void loop()
     if (data.timer != 0)
     {
       float temp;
-      if(ds18b20_read_t(temp));
+      if(ds18b20_read_t(temp))
         data.temp_str = temp;
       else
         data.temp_str = NAN;
