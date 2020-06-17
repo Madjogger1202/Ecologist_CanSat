@@ -20,7 +20,7 @@ uint8_t highCh;
 uint8_t lowCh;
 
 #include <SoftwareSerial.h>       // для софтварного uart
-SoftwareSerial MH_Z14A(TXD, RXD); // инициализация
+SoftwareSerial MH_Z14A(RXD, TXD); // инициализация
 
 void setup()
 {
