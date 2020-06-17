@@ -1,5 +1,5 @@
-#define RXD 4  // по даташиту - TX датчика на 11 контакте
-#define TXD 5  // по даташиту - RX датчика на 10 контакте
+#define RXD 5  // по даташиту - TX датчика на 11 контакте
+#define TXD 6  // по даташиту - RX датчика на 10 контакте
 byte send_request[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79}; 
 // массив для запроса данных. 1)команда для старта
 //                            2)номер датчика, хз нужно ли, в даташите не увидел общей команды
@@ -31,7 +31,7 @@ void setup()
 void loop()
 {
   MH_Z14A.write(send_request, 9);
-  memset(get_value, 0, 9);
+//  memset(get_value, 0, 9);
   MH_Z14A.readBytes(get_value, 9);
   uint8_t crc = 0;
   for (int i = 1; i < 8; i++) crc+=get_value[i]; //считаем контрольную сумму по формуле из даташита
