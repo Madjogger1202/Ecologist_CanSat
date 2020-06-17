@@ -1,22 +1,50 @@
+#define RXD 4  // по даташиту - TX датчика на 11 контакте
+#define TXD 5  // по даташиту - RX датчика на 10 контакте
+byte send_request[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79}; 
+// массив для запроса данных. 1)команда для старта
+//                            2)номер датчика, хз нужно ли, в даташите не увидел общей команды
+//                            3)сама команда, из даташита: send concentration value of the sensor
+//                            4-8)спам нулями
+//                            9)запрос контрольной суммы, в даташите не увидел, но в интернеье вроде так ставят
+unsigned char get_value[9];
+// массив для запроса данных. 1)команда для старта
+//                            2)номер датчика, хз нужно ли, в даташите не увидел общей команды
+//                            3)в даташите это называется high channel
+//                            4)в даташите это называется low channel
+//                            5)температура (надеюсь, что сразу в градусах по цельсию)
+//                            6-8)спам нулями
+//                            9)запрос контрольной суммы, в даташите не увидел, но в интернеье вроде так ставят
 
-#include "MHZ14.h"
+int ppm;
+uint8_t highCh;
+uint8_t lowCh;
 
-int MHZ14PIN = 7;// MHZ14 input pin
-int MHZ14_CALIB_PIN = 6;// MHZ14 calibrate pin
+#include <SoftwareSerial.h>       // для софтварного uart
+SoftwareSerial MH_Z14A(TXD, RXD); // инициализация
 
-MHZ14 CO2(MHZ14PIN);// initializer
-
-void setup(){
-  Serial.begin(9600);
-  
-  pinMode(MHZ14_CALIB_PIN, OUTPUT);
-  digitalWrite(MHZ14_CALIB_PIN, HIGH);
+void setup()
+{
+  MH_Z14A.begin(9600); 
+  Serial.begin(115200);
 }
 
-
-
-void loop(){
-  unsigned long PPM = CO2.read();
-  Serial.println("CO2 PPM: "+String(PPM)+ " CO2 mg/M^3: "+ String(PPM * CO2.PPM_TO_MG_M3));
-  delay(100);
+void loop()
+{
+  MH_Z14A.write(send_request, 9);
+  memset(get_value, 0, 9);
+  MH_Z14A.readBytes(get_value, 9);
+  uint8_t crc = 0;
+  for (int i = 1; i < 8; i++) crc+=get_value[i]; //считаем контрольную сумму по формуле из даташита
+  crc = ~crc;
+  crc++;
+  if ( !(get_value[0] == 0xFF && get_value[1] == 0x86 && get_value[8] == crc) ) // сравниваем ответ с  контрольной суммой
+  {
+    Serial.println("CRC error");
+  } 
+  highCh = uint8_t(get_value[2]);
+  lowCh =  uint8_t(get_value[3]);
+  ppm = highCh*256+lowCh;
+  Serial.print(ppm);
+  Serial.print("PPM");
+  delay(5000);
 }
