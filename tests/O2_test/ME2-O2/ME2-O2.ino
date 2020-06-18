@@ -1,5 +1,5 @@
 
-const float VRefer = 3.3;       // voltage of adc reference
+const float VRefer = 5;       // voltage of adc reference
 const int pinAdc   = A0;
 float Vout =0;
 void setup() 
