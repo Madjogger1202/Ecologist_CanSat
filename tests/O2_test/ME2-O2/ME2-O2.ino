@@ -11,7 +11,7 @@ void loop()
 {
     Serial.print("Vout =");
 
-    Vout = readO2Vout();
+    Vout = readO2Vout()*2.68;
     Serial.print(Vout);
     Serial.print(" V, Concentration of O2 is ");
     Serial.println(readConcentration());
@@ -35,11 +35,11 @@ float readO2Vout()
 float readConcentration()
 {
     // Vout samples are with reference to 3.3V
-    float MeasuredVout = readO2Vout();
+    float MeasuredVout = readO2Vout()*2.68;
 
     //float Concentration = FmultiMap(MeasuredVout, VoutArray,O2ConArray, 6);
     //when its output voltage is 2.0V,
-    float Concentration = MeasuredVout * 0.21 / 2.0;
+    float Concentration = MeasuredVout * 0.21/ 2.0;
     float Concentration_Percentage=Concentration*100;
     return Concentration_Percentage;
 }

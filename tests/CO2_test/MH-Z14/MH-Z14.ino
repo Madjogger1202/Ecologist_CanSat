@@ -45,7 +45,7 @@ void loop()
   highCh = uint8_t(get_value[2]);
   lowCh =  uint8_t(get_value[3]);
   ppm = highCh*256+lowCh;
-  Serial.print(get_value[4]);
+  Serial.print(get_value[4]-40);
   Serial.println(" C");
   Serial.print(ppm);
   Serial.println("PPM");
