@@ -1,160 +1,131 @@
+#define Radio_CE 12                     // пин chip enable для радио
+#define Radio_CSN 13                    // пин chip select для радио
+#define Acsel_pin 43                    // пин chip select для акселерометра
+#define Temperature_pin 42              // пин chip select для термометра
+#define Pressure_pin 44                 // пин chip select для барометра
+#define Sd_pin 39                       // пин chip select для SD карты
 
+#define OW_SKIP_ROM 0xCC                // Пропуск этапа адресации на шине 
+#define OW_DS18B20_CONVERT_T 0x44       // Команда на начало замера
+#define OW_DS18B20_READ_SCRATCHPAD 0xBE // Чтение скратчпада ds18b20
+#define DS18B20_SCRATCHPAD_SIZE 9       // Размер скратчпада ds18b20
 
+#define telemetri_rate 250              // задержка между отправкой пакетов, задаётся в милисекундах 
 
-/* 
-  Основная программа аппарата "Эколог"
-  
-  Модули, работа которых реализуется: 
-            1)датчик температуры
-            2)датчик давления
-            3)акселерометр  (сначала я напишу для mpu6050, так как он у меня есть)
-            4)датчик кислорода
-            5)датчик углекислого газа
-            6)датчик примесей
-            7)радиомодуль
-            8)модуль SD карты
-            9)дозиметр
-            10)GPS
-             
-  Во-первых, частота(промежутки времени) замеров: 
-    1)Барометр:
-        разрешение ~ 2 м => замеры делаем каждые 0,5 секунд (при скорости падения 8 м/с)
-    2)Датчик температуры:
-        раз в секунду (не является константой, вопрос открыт)
-    3)Акселерометр:
-        раз в 0,5 секунды (тоже самое, что и с температурой)
-    4)Датчик кислорода:
-        раз в 0,5 секунду (не является константой, вопрос открыт)
-    5)Датчик примесей:
-        раз в 0,5 секунду (не является константой, вопрос открыт)
-    6)Датчик CO2:
-        раз в 0,5 секунду (не является константой, вопрос открыт)
-    7)Дозиметр:
-        тут сложнее, но замеры промежуточные будут получаться где-то через секунд 5, 
-        и это при времени более-менее точного замера в 75 секунд (вопрос открыт)
-    8)Не совсем замер, но тоже вписывается: Радиомодуль+SD карточка+GPS: 
-        пакеты собираются и отправляются где-то раз в 0,5 секунды,
-        надо посоветоваться (в пакеты можно собрать сразу пачку значений за несколько промежутков времени)
-        (вопрос открыт)
-
-  Ссылки в помощь:
-      Датчик кислорода: http://wiki.seeedstudio.com/Grove-Gas_Sensor-O2/
-      Датчик СО2: https://domoticx.com/arduino-co2-sensor-mh-z14/ (сайт на норвежском)
-      Датчик примесей: увы, тут как повезёт 
-      барометр: из примера 
-      термометр: из примера
-      акселерометр: из примера
-      радиомодуль: http://arduino.zl3p.com/modules/radio
-      sd карта: https://robotclass.ru/tutorials/arduin-read-write-micro-sd-card/
-      дозиметр: https://cxem.net/dozimetr/3-10.php
-
-      Модули, используемые в тестовой программе:
-      1)Модуль СД карты
-      2)BMP280
-      3)DS18B20
-      4)MPU6050
-      
-      Структура тестовой программы (без отправки по радио)
-      {
-        подключение библиотек
-        инициализация переменных 
-
-
-      }
-
-
-*/ 
-
-#define TEMP_PIN 2 // вешаем датчик температуры на 2 ногу
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
+#include <OneWire.h>
+#include <string.h>  // для memcpy
+#include <stdint.h>  // для int8_t, uint8_t и т.п.
+#include <math.h> // для NAN
 #include "Adafruit_BMP280.h"
-Adafruit_BMP280 barometr; // объект нашего барометра
-#include "I2Cdev.h"     //Библиотека для работы с I2C устройствами
-#include "MPU6050.h"    //Библиотека для работы с MPU6050
-#include "microDS18B20.h"
-MicroDS18B20 temp_sensor(TEMP_PIN); // определяем наш датчик на его пин 
-MPU6050 accelgyro;
-const int chipSelect = 4;
-int HeightCalibrate;  // калибровка высоты (корректировка по первоначальной высоте(высоте, на которой произошла инициализация ))
-int Height;  // текущая высота относительно точки запуска
-float Temp1;  // температура с DS18B20 (основная)
-int Temp2;  // температура с BMP280
-int Pressure;  // давление с BMP280
-/*   переменные для значений с акселерометра    */
-int x_s;  // статичное по X
-int y_s;  // статичное по Y
-int z_s;  // статичное по Z
-int x_a;  // ускорение по X
-int y_a;  // ускорение по Y
-int z_a;  // ускорение по Z
+#include "SparkFun_ADXL345.h"
+#include <nRF24L01.h>
+#include <RF24.h>
+RF24 radio(Radio_CE, Radio_CSN);        // Создаём объект radio для работы с библиотекой RF24, указывая номера выводов nRF24L01+ (CE, CSN)
+Adafruit_BMP280 bmp(Pressure_pin);      // создаём объект bmp для работы с барометром
+OneWire  ds(42);                        // создаём объект ds для работы с термометром
+ADXL345 adxl = ADXL345(Acsel_pin);      // создаём объект ADXL345 для работы с акселерометром
+
+int x, y, z;                            // переменные для ускорений по 3 осям
+
+struct telemetry       //Создаем структуру
+{
+  float temp_str;      // переменная для температуры
+  float bmp_temp_str;  // переменная для температуры с барометра
+  float press_str;  // переменная для давления с барометра
+  int x_str;           ////////////////////////////////////////////////
+  int y_str;           //  переменные для ускорений с акселерометра  //
+  int z_str;           ////////////////////////////////////////////////
+  uint32_t timer;      // переменная для подсчета выполненных циклов программы
+} data;
+
 
 void setup() {
-  Serial.begin(9600);
-  accelgyro.initialize();  
-  
-  Serial.println("   /// АППАРАТ ЭКОЛОГ К РАБОТЕ ГОТОВ ///   ");
-  Serial.println("   /// ИНИЦИАЛИЗАЦИЯ БАРОМЕТРА...    ///");
-  
-  delay(100);
-}
-
-void loop() {
-  delay(1000);
-}
+  Serial.begin(115200);
+  SPI.begin();                                               // инициализируем работу с SPI
+  SPI.setDataMode(SPI_MODE3);                                // насотройка SPI
+  delay(100);  
+  radio.begin();                                             // Инициируем работу nRF24L01+
+  radio.setChannel(120);                                     // Указываем канал передачи данных (от 0 до 127), 5 - значит передача данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
+  radio.setDataRate(RF24_250KBPS);                           // Указываем скорость передачи данных (RF24_250KBPS, RF24_1MBPS, RF24_2MBPS), RF24_1MBPS - 1Мбит/сек
+  radio.setPALevel(RF24_PA_HIGH);                            // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
+  radio.openWritingPipe(0x1234567899LL);                     // Открываем трубу с идентификатором 0x1234567899LL для передачи данных (на одном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)
 
 
-void SD_write(String dataString)
-{
-   if (dataFile) 
-   {
-      dataFile.println(dataString);
-      dataFile.close();
-   } else 
-   {
-      Serial.println("Ошибка записи!");
-   }
+  bmp.begin();
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* режим работы      */
+                  Adafruit_BMP280::SAMPLING_X2,     /* коэф. температуры */
+                  Adafruit_BMP280::SAMPLING_X16,    /* коэф. давления    */
+                  Adafruit_BMP280::FILTER_X16,      /* фильтр            */
+                  Adafruit_BMP280::STANDBY_MS_500); /* время ожидания    */
+
+  adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления (на случай, если он был случайно включён)
+  adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
+  delay(1000);                     
 }
+void loop()
+{
+  ////////////////////////////////////          ДЛЯ РАБОТЫ С ДАТЧИКОМ ТЕМПЕРАТУРЫ DS18B20
+  if ((data.timer % 3 == 0))        //  раз в 3 итерации выполняется снятие данных с датчика
+  {                                 //  
+    if (data.timer != 0)            //  при первой итерации - пропускается блок снятия показаний, после чего посылается запрос на температуру (датчик не может мгновенно дать показания)
+    {                               //                                                                                    |
+      float temp;                   //                                                                                    |                                                                                    |
+      if(ds18b20_read_t(temp))      //                                                                                    |
+        data.temp_str = temp;       //                                                                                    |
+      else                          //                                                                                    |
+        data.temp_str = NAN;        //   в случае исключения в переменную пишем, что она была посчитана неверно           |
+    }                               //                                                                                    |
+    ds18b20_convert_t();            // <<|--------------------------------------------------------------------------------/
+  }                                 //
+  ////////////////////////////////////
 
 
-void Barometr_settings()
-{
-  barometr.setSampling(Adafruit_BMP280::MODE_NORMAL,     
-                       Adafruit_BMP280::SAMPLING_X2,     
-                       Adafruit_BMP280::SAMPLING_X16,    
-                       Adafruit_BMP280::FILTER_X16,      
-                       Adafruit_BMP280::STANDBY_MS_500);
+  /////////////////////////////////////////////// ЗАПИСЬ ОСТАВШИХСЯ ДАННЫХ В СТРУКТУРНЫЕ ПЕРЕМЕННЫЕ И СКИДЫВАЕМ СТРУКТУРУ ПО РАДИО
+  adxl.readAccel(&x, &y, &z);                  // запись значений для ускорений в указанные переменные
+  data.bmp_temp_str = bmp.readTemperature();   // запись в структурную переменную телеметрии значений температуры с барометра
+  data.press_str = bmp.readPressure();         //
+  data.x_str = x;                              /////////////////////////////////////////////////////////////
+  data.y_str = y;                              //   запись в структурную переменную телеметрии ускорений  //
+  data.z_str = z;                              /////////////////////////////////////////////////////////////
+  radio.write(&data, sizeof(data));            // отправка в эфир пакета данных
+  delay(telemetri_rate);                       // задержка для отправки данных
+  data.timer++;                                // + 1 выполненный цикл
+  ///////////////////////////////////////////////
 }
-void Get_temp_and_pressure()
+bool ds18b20_convert_t()
 {
-  temp_sensor.requestTemp();
-  Pressure = barometr.readPressure();
-  Temp1 = temp_sensor.getTemp();
-}
-void Get_accel()
-{
-  accelgyro.getMotion6(&x_a, &y_a, &z_a, &x_s, &y_s, &z_s); 
-}
-int SD_error()
-{
-  if (!SD.begin(chipSelect)) {
-        Serial.println("Card failed, or not present");
-        return 1;
-    }
-}
-int BMP_error()
-{
-  if (!barometr.begin()) {
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-    while (1);
+
+  if (!ds.reset()) // даем reset на шину
+  {
+    return false;
   }
+  ds.write(OW_SKIP_ROM, 1);
+  ds.write(OW_DS18B20_CONVERT_T, 1);
+  return true;
 }
-int DS18_error()
+
+bool ds18b20_read_t(float & temperatur)
 {
-  return(0);
-}
-int NRF_error()
-{
-  return(0);
+
+  if (!ds.reset()) // даем резет на шину
+    return false;
+
+  ds.write(OW_SKIP_ROM, 1); // Пропускаем этап адресации
+  uint8_t scratchpad[DS18B20_SCRATCHPAD_SIZE];
+  ds.write(OW_DS18B20_READ_SCRATCHPAD, 1);
+  ds.read_bytes(scratchpad, sizeof(scratchpad));
+  uint8_t crc_actual = scratchpad[DS18B20_SCRATCHPAD_SIZE - 1]; // Берем контрольную сумму, которую насчитал у себя датчик и положил в последний байт скратчпада
+  uint8_t crc_calculated = OneWire::crc8(scratchpad, DS18B20_SCRATCHPAD_SIZE - 1); // Считаем сами по всем байтам скратчпада кроме последнего
+  float temp;
+  if (crc_calculated != crc_actual)
+  {
+    return false;
+  }
+  uint16_t uraw_temp;
+  uraw_temp = scratchpad[0] | (static_cast<uint16_t>(scratchpad[1]) << 8);
+  int16_t raw_temp;
+  memcpy(&raw_temp, &uraw_temp, sizeof(raw_temp));
+  temp = raw_temp / 16.f;
+  temperatur = temp;
+  return true;
 }
