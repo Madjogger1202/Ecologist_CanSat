@@ -45,7 +45,8 @@ unsigned char get_value[9];
   uint8_t lowCh; 
   MH_Z14A.flush(); 
   MH_Z14A.write(send_request, 9);
-  MH_Z14A.readBytes(get_value, 9);
+  if(MH_Z14A.readBytes(get_value, 9) == 9)
+  {
   uint8_t crc = 0;
   for (int i = 1; i < 8; i++) crc+=get_value[i]; //считаем контрольную сумму по формуле из даташита
   crc = ~crc;
@@ -57,4 +58,6 @@ unsigned char get_value[9];
   ppm = highCh*256+lowCh;
   temp = get_value[4]-40;
   return 1;
+  }
+  else return 0;
 }
