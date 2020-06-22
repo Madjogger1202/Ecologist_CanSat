@@ -15,12 +15,19 @@ void setup()
 
 void loop()
 {
-  get_MH_Z14A_data(PPM, T);
+  if(get_MH_Z14A_data(PPM, T))
+  {
   Serial.print(T);
   Serial.println(" C");
   Serial.print(PPM);
   Serial.println("PPM");
+  }
+  else
+  {
+  Serial.println("ERR");   
+  }
   delay(200);
+
 }
 
 boolean get_MH_Z14A_data(int16_t &ppm, int8_t &temp)
