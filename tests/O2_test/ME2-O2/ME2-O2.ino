@@ -1,45 +1,30 @@
-
-const float VRefer = 5;       // voltage of adc reference
+  unsigned int sum = 0;
+const float VRefer = 21.59;       // voltage of adc reference
 const int pinAdc   = A0;
 float Vout =0;
 void setup() 
 {
+  //pinMode(A0, INPUT_PULLUP);
     Serial.begin(9600);
 }
 
 void loop() 
 {
-    Serial.print("Vout =");
-
-    Vout = readO2Vout()*2.68;
-    Serial.print(Vout);
-    Serial.print(" V, Concentration of O2 is ");
-    Serial.println(readConcentration());
+    Serial.print(" Concentration of O2 is ");
+    Serial.println(readO2Vout());
     delay(500);
 }
 
 float readO2Vout()
 {
-    long sum = 0;
-    for(int i=0; i<32; i++)
+  for (unsigned char i = 32;i > 0;i--)
     {
-        sum += analogRead(pinAdc);
+      sum = sum + analogRead(pinAdc);
+      delay(50);
     }
-
-    sum >>= 5;
-
-    float MeasuredVout = sum * (VRefer / 1023.0);
-    return MeasuredVout;
-}
-
-float readConcentration()
-{
-    // Vout samples are with reference to 3.3V
-    float MeasuredVout = readO2Vout()*2.68;
-
-    //float Concentration = FmultiMap(MeasuredVout, VoutArray,O2ConArray, 6);
-    //when its output voltage is 2.0V,
-    float Concentration = MeasuredVout * 0.21/ 2.0;
-    float Concentration_Percentage=Concentration*100;
-    return Concentration_Percentage;
+    sum = sum >> 5;
+    //SerialUSB.println(sum);
+    float output = sum / 8.08;
+    //SerialUSB.println(sum);
+    return output;
 }
