@@ -16,6 +16,7 @@
 
 #include <SoftwareSerial.h>       // для софтварного uart
 #include <OneWire.h>
+#include <TinyGPS.h>
 #include <string.h>  // для memcpy
 #include <stdint.h>  // для int8_t, uint8_t и т.п.
 #include <math.h> // для NAN
@@ -28,17 +29,19 @@ Adafruit_BMP280 bmp(Pressure_pin);      // создаём объект bmp дл�
 OneWire  ds(42);                        // создаём объект ds для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);      // создаём объект ADXL345 для работы с акселерометром
 SoftwareSerial MH_Z14A(MH_Z14A_RXD, MH_Z14A_TXD); // инициализация
+SoftwareSerial GPS(9, 8);
+float FLAT, FLON, ALT;
 
-int x, y, z;                            // переменные для ускорений по 3 осям
+short int x, y, z;                            // переменные для ускорений по 3 осям
 
 struct telemetry       //Создаем структуру
 {
   float temp_str;      // переменная для температуры
   float bmp_temp_str;  // переменная для температуры с барометра
   float press_str;     // переменная для давления с барометра
-  int x_str;           ////////////////////////////////////////////////
-  int y_str;           //  переменные для ускорений с акселерометра  //
-  int z_str;           ////////////////////////////////////////////////
+  short int x_str;     ////////////////////////////////////////////////
+  short int y_str;     //  переменные для ускорений с акселерометра  //
+  short int z_str;     ////////////////////////////////////////////////
   int16_t CO2_ppm;     // переменная для хранения значения CO2 в ppm
   int8_t MH_Z14A_temp; // переменная для хранения температуры с датчика СО2
   uint32_t timer;      // переменная для подсчета выполненных циклов программы
@@ -47,8 +50,10 @@ struct telemetry       //Создаем структуру
 
 void setup() {
   Serial.begin(115200);
-  MH_Z14A.begin(9600); 
+  MH_Z14A.begin(9600);
+  GPS.begin(9600); 
   MH_Z14A.setTimeout(80);
+  GPS.setTimeout(100);
   SPI.begin();                                               // инициализируем работу с SPI
   SPI.setDataMode(SPI_MODE3);                                // насотройка SPI
   delay(100);  
@@ -173,4 +178,32 @@ unsigned char get_value[9];
   ppm = highCh*256+lowCh;
   temp = get_value[4]-40;
   return 1;
+}
+
+boolean get_gps_data(float &flat,float &flon, float &alt)
+{
+  bool newData = false;
+  unsigned long chars;
+  unsigned short sentences, failed;
+    GPS.flush();
+    while (GPS.available())
+    {
+      char c = GPS.read();
+      Serial.write(c); // Это можно откомментить для просмотра потока данных с модуля
+      if (gps.encode(c)) 
+        newData = true;
+    }
+
+
+  if (newData)
+  {
+    gps.f_get_position(&flat, &flon);
+
+    alt=gps.f_altitude()-30;
+    return 1;
+  }
+  
+  gps.stats(&chars, &sentences, &failed);
+  if (chars == 0)
+    return 0;
 }
