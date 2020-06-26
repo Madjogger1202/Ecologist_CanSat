@@ -1,54 +1,21 @@
-#include <SoftwareSerial.h>
+#include <iarduino_GPS_NMEA.h>                    //  Подключаем библиотеку для расшифровки строк протокола NMEA получаемых по UART.
+iarduino_GPS_NMEA gps;                            //  Объявляем объект gps для работы с функциями и методами библиотеки iarduino_GPS_NMEA.
+                                                  //
+void setup(){                                     //
+     Serial.begin(9600);                          //  Инициируем работу с аппаратной шиной UART для вывода данных в монитор последовательного порта на скорости 9600 бит/сек.
+     Serial1.begin(9600);                         //  Инициируем работу с аппаратной шиной UART для получения данных от GPS модуля на скорости 9600 бит/сек.
+     gps.begin(Serial1);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
+}                                                 //
+                                                  //
 
-#include <TinyGPS.h>
-
-TinyGPS gps;
-SoftwareSerial ss(9, 8);
-float FLAT, FLON, ALT;
-void setup()
-{
-  Serial.begin(9600);
-  ss.begin(9600);
-}
-
-void loop()
-{
-  if(get_gps_data(FLAT, FLON, ALT))
- {   Serial.print("LAT=");
-    Serial.print(FLAT, 6);
-    Serial.print(" LON=");
-    Serial.print(FLON, 6);
-    Serial.print("  ");
-    Serial.println(ALT);
-  
- }Serial.println("...");
-  delay(200);
-}
-
-boolean get_gps_data(float &flat,float &flon, float &alt)
-{
-  bool newData = false;
-  unsigned long chars;
-  unsigned short sentences, failed;
-    ss.flush();
-    while (ss.available())
-    {
-      char c = ss.read();
-      Serial.write(c); // Это можно откомментить для просмотра потока данных с модуля
-      if (gps.encode(c)) 
-        newData = true;
-    }
-
-
-  if (newData)
-  {
-    gps.f_get_position(&flat, &flon);
-
-    alt=gps.f_altitude()-30;
-    return 1;
-  }
-  
-  gps.stats(&chars, &sentences, &failed);
-  if (chars == 0)
-    return 0;
-}
+void loop(){                                      //
+//   Читаем данные:                               //  Чтение может занимать больше 1 секунды.
+     gps.read();                                  //  Функцию можно вызвать с указанием массива для получения данных о спутниках.
+//   Проверяем достоверность координат:           //
+     if(gps.errPos){                              //  Если данные не прочитаны (gps.errPos=1) или координаты недостоверны (gps.errPos=2), то ...
+       Serial.println("Координаты недостоверны"); //  Выводим сообщение об ошибке.
+       delay(2000); return;                       //  Ждём 2 секунды и выполняем функцию loop() с начала.
+     }                                            //                 //
+     Serial.print(" "); Serial.print(gps.latitude ,5); Serial.print("°, ");
+     Serial.print(" "); Serial.print(gps.longitude,5); Serial.print("°.\r\n");
+}    
