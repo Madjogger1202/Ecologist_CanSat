@@ -1,8 +1,6 @@
 #include <SPI.h>                                       
 #include <nRF24L01.h>                                     
-#include <RF24.h>           
-#include <SerialFlow.h>                  
- //   SerialFlow rd(&Serial); // RX, TX                                  
+#include <RF24.h>                                        
 RF24 radio(10, 9);                                  
 struct telemetry        //Создаем структуру
 {                  
@@ -14,15 +12,13 @@ struct telemetry        //Создаем структуру
    int z_str;           ////////////////////////////////////////////////
    uint32_t timer;      // переменная для подсчета выполненных циклов программы
 }data;  
- // всего тестов :  1)давление для bmp280 2) температура для ds18b20 и bmp280 3) ускорения для adxl 
+ // всего тестов :  1)давление для bmp280 2) температура для ds18b20 3) ускорения для adxl 
  #define test_1 3
  #define test_2 4
  #define test_3 5
  
 void setup()
 {
- // rd.setPacketFormat(2, 3, 0);
-    //rd.begin(115200);
     pinMode(test_1, INPUT_PULLUP);
     pinMode(test_2, INPUT_PULLUP);
     pinMode(test_3, INPUT_PULLUP);
@@ -37,35 +33,54 @@ void setup()
 void loop()
 {
     if(radio.available())
-    {                                
+    //{                                
       radio.read(&data, sizeof(data));                   // читаем данные и указываем сколько байт читать
       if(!digitalRead(test_1))
       {
-   //   Serial.print("$");
+      Serial.print("$");
       Serial.println(data.press_str); // в паскалях
-  //    Serial.print(";");
+      Serial.print(";");
       }
       else if(!digitalRead(test_2))
       {
-   //   Serial.print("$");
+      Serial.print("$");
       Serial.println(data.temp_str); // в градусах 
   //    Serial.println(" "); 
-      Serial.println(data.bmp_temp_str); // в градусах
-   //   Serial.print(";");
+  //    Serial.println(data.bmp_temp_str); // в градусах
+      Serial.print(";");
       }
       else if(!digitalRead(test_3))
       {
-  //    Serial.print("$");
-    //  Serial.println(data.x_str/3.26197); // в м/с2 
-    //  Serial.println(" "); 
-  //    Serial.println(data.y_str/3.26197); // в м/с2 
-   //   Serial.println(" "); 
-   //   Serial.println(data.z_str/3.26197); // в м/с2 
-  //    Serial.print(";");
-  //    rd.setPacketValue( data.x_str/3.26197 );
-  //  rd.setPacketValue(data.y_str/3.26197 );
- //   rd.setPacketValue( data.z_str/3.26197 );
- //   rd.sendPacket();
-      }   
-    }
+      Serial.print("$");
+      Serial.println(data.x_str/3.26197); // в м/с2 
+      Serial.println(" "); 
+      Serial.println(data.y_str/3.26197); // в м/с2 
+      Serial.println(" "); 
+      Serial.println(data.z_str/3.26197); // в м/с2 
+      Serial.print(";");
+
+      }
+      else
+      {
+       Serial.print("Temperature (ds18b20):");            // 
+       Serial.println(data.temp_str);                     // пишем в порт температуру 
+       Serial.print("Pressure (bmp280):");                // 
+       Serial.println(data.press_str*2);                  // пишем в порт давление с барометра
+       Serial.print("Temperature (bmp280):");             //
+       Serial.print(data.bmp_temp_str);                 // пишем в порт температуру с барометра
+       Serial.print("X (adxl345):");                      //
+       Serial.print(" ");                      //
+       Serial.println(data.x_str*3);  
+       Serial.print(" ");  // пишем в порт ускорение по оси X
+       Serial.print("Y (adxl345):");                      //   
+       Serial.println(data.y_str*3);  
+       Serial.print(" ");  // пишем в порт ускорение по оси Y
+       Serial.print("Z (adxl345):");                      //
+       Serial.println(data.z_str*3);                        // пишем в порт ускорение по оси Z
+       Serial.println("");                        // пишем в порт ускорение по оси Z
+       Serial.println("");    
+       Serial.println("");    
+       Serial.println("");          
+      }
+   // }
 }
