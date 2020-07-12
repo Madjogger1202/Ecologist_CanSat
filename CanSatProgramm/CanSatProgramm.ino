@@ -10,7 +10,7 @@
 #define PIN_NO2 A2                      // пин для датчика NО2
 #define PIN_NH3 A3                      // пин для датчика NH3
 
-#define RADIO_BUF_SIZE 18 // макс размер - 3хfloat + 4 байт таймера + 2 байта контрольной суммы
+#define RADIO_BUF_SIZE 18               // макс размер - 3хfloat + 4 байт таймера + 2 байта контрольной суммы
 
 #define OW_SKIP_ROM 0xCC                // Пропуск этапа адресации на шине 
 #define OW_DS18B20_CONVERT_T 0x44       // Команда на начало замера
@@ -19,7 +19,7 @@
 
 
 #include "MICS6814.h"
-#include <iarduino_GPS_NMEA.h>          //  Подключаем библиотеку для расшифровки строк протокола NMEA получаемых по UART.          
+#include <iarduino_GPS_NMEA.h>          // Подключаем библиотеку для расшифровки строк протокола NMEA получаемых по UART.          
 #include <OneWire.h>                    // библиотека для работы с барометром по одноименному протоколу
 #include <string.h>                     // библиотека для memcpy
 #include <stdint.h>                     // на всякий случай для int8_t, uint8_t и т.п.
@@ -33,39 +33,40 @@ RF24 radio(Radio_CE, Radio_CSN);        // Создаём объект radio д�
 Adafruit_BMP280 bmp(Pressure_pin);      // создаём объект bmp для работы с барометром
 OneWire  ds(42);                        // создаём объект ds для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);      // создаём объект ADXL345 для работы с акселерометром
-MICS6814 gas(PIN_CO, PIN_NO2, PIN_NH3);
+MICS6814 gas(PIN_CO, PIN_NO2, PIN_NH3); // 
 
-enum data_id
-{
-  ds18_id =   0,
-  bmp_id =    1,
-  adxl_id =   2,
-  gps_id =    3,
-  co2_id =    4,
-  o2_id =     5,
-  gaz_x3_id = 6,
-  rad_id =    7
+enum data_id          //  
+{                     //
+  ds18_id =   0,      //
+  bmp_id =    1,      //
+  adxl_id =   2,      //
+  gps_id =    3,      //
+  co2_id =    4,      //
+  o2_id =     5,      //
+  gaz_x3_id = 6,      //
+  rad_id =    7       //
   
 };
 
-struct all_data       //Создаем структуру
+struct all_data       // Создаем структуру
 {
   float temp_str;     // переменная для температуры
   float press_str;    // переменная для давления с барометра
-  int x_str;       ////////////////////////////////////////////////
-  int y_str;       //  переменные для ускорений с акселерометра  //
-  int z_str;       ////////////////////////////////////////////////
-  float gps_lat;
-  float gps_lon;
-  float O2_percent;
+  int x_str;          ////////////////////////////////////////////////
+  int y_str;          //  переменные для ускорений с акселерометра  //
+  int z_str;          ////////////////////////////////////////////////
+  float gps_lat;      // 
+  float gps_lon;      //
+  float O2_percent;   //
   int16_t CO2_ppm;    // переменная для хранения значения CO2 в ppm
-  float CO_ppm;
-  float NO2_ppm;
-  float NH3_ppm;  
-  float radiation;
+  float CO_ppm;       //
+  float NO2_ppm;      //
+  float NH3_ppm;      //
+  float radiation;    //
   uint32_t timer;     // переменная для подсчета выполненных циклов программы
-} ecologist_data;
-  
+} ecologist_data;     //
+
+////////////////////////////// функции для обновления данных (получения их)  
 boolean ds18b20_convert_t();
 boolean ds18b20_read_t(float & temperatur);
 boolean get_MH_Z14A_data(int16_t &ppm);
@@ -76,41 +77,48 @@ boolean get_GPS_data(float &lon, float &lat);
 boolean get_Radiation_value(float &doze);
 boolean get_3_gas_value(float &CO_val, float &NO2_val, float &NH3_val);
 
-boolean send_O2_package(float O2);
-boolean send_ds18_package(float temp);
-boolean send_bmp_package(float pressur);
-boolean send_adxl_package(int x_a, int y_a, int z_a);
-boolean send_CO2_package(int16_t Co2);
-boolean send_3_gas_package(float co, float no2, float nh3);
-boolean send_GPS_package(float lon, float lat);
-boolean send_radiation_package(float rad_doze);
+////////////////////////////// функции для отправки пакетов ////////////
+boolean send_O2_package(float O2);                                    //
+boolean send_ds18_package(float temp);                                //
+boolean send_bmp_package(float pressur);                              //
+boolean send_adxl_package(int x_a, int y_a, int z_a);                 //
+boolean send_CO2_package(int16_t Co2);                                //
+boolean send_3_gas_package(float co, float no2, float nh3);           //
+boolean send_GPS_package(float lon, float lat);                       //
+boolean send_radiation_package(float rad_doze);                       //
+////////////////////////////////////////////////////////////////////////
 
-long int ds18b20_timer = 0 ;
-long int bmp280_timer =  0 ;
-long int adxl345_timer = 0 ;
-long int gps_timer =     0 ;
-long int co2_timer =     0 ;
-long int o2_timer =      0 ;
-long int gaz_x3_timer =  0 ;
-long int rad_timer =     0 ;
+////////////////////////////// зануляем таймеры для отправки пакетов //
+long int ds18b20_timer = 0 ;                                         //
+long int bmp280_timer =  0 ;                                         //
+long int adxl345_timer = 0 ;                                         //
+long int gps_timer =     0 ;                                         //
+long int co2_timer =     0 ;                                         //
+long int o2_timer =      0 ;                                         //
+long int gaz_x3_timer =  0 ;                                         //
+long int rad_timer =     0 ;                                         //
+///////////////////////////////////////////////////////////////////////
 
-long int ds18b20_rate = 1000;
-long int bmp280_rate =  300 ;
-long int adxl345_rate = 200 ;
-long int gps_rate =     1000;
-long int co2_rate =     500 ;
-long int o2_rate =      1000;
-long int gaz_x3_rate =  1000;
-long int rad_rate =     60000;
+////////////////////////////// задержка между отправкой пакетов данных для каждого модуля ///
+long int ds18b20_rate = 1000;                                                              //
+long int bmp280_rate =  300 ;                                                              //
+long int adxl345_rate = 200 ;                                                              //
+long int gps_rate =     1000;                                                              //
+long int co2_rate =     500 ;                                                              //
+long int o2_rate =      1000;                                                              //
+long int gaz_x3_rate =  1000;                                                              //
+long int rad_rate =     60000;                                                             //
+/////////////////////////////////////////////////////////////////////////////////////////////
 
-
-volatile int counter = 0;
-void rad_tick();
+volatile int counter = 0;   //
+void rad_tick();            //
 
 
 void setup() {
-  pinMode(7, INPUT);
-  attachInterrupt(7, rad_tick, FALLING);
+  //////////////////////////////////////////////
+  pinMode(7, INPUT);                          //
+  attachInterrupt(7, rad_tick, FALLING);      //
+  //////////////////////////////////////////////
   Serial.begin(9600);                         //  Инициируем работу с аппаратной шиной UART для получения данных от GPS модуля на скорости 9600 бит/сек.
   gps.begin(Serial);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
   SPI.begin();                                // инициализируем работу с SPI
@@ -140,7 +148,7 @@ void loop()
   
   
   ////////////////////////////////////          ДЛЯ РАБОТЫ С ДАТЧИКОМ ТЕМПЕРАТУРЫ DS18B20
-  if (millis >= ds18b20_timer)      //  раз в 3 итерации выполняется снятие данных с датчика
+  if (millis >= ds18b20_timer)      // 
   {                                 //  
    if (ecologist_data.timer != 0)   //  при первой итерации - пропускается блок снятия показаний, после чего посылается запрос на температуру (датчик не может мгновенно дать показания)
     {                               //                                                                                    |
@@ -152,55 +160,55 @@ void loop()
     }                               //                                                                                    |
     ds18b20_convert_t();            // <<|--------------------------------------------------------------------------------/
     send_ds18_package(ecologist_data.temp_str);
-    ds18b20_timer=millis+ds18b20_rate;      //
+    ds18b20_timer=millis+ds18b20_rate;//
   }                                 //
   ////////////////////////////////////
   if (millis >= bmp280_timer)
   {
-    get_pressure(ecologist_data.press_str);
-    send_bmp_package(ecologist_data.press_str);
-    bmp280_timer=millis+bmp280_rate;
+    get_pressure(ecologist_data.press_str);     //
+    send_bmp_package(ecologist_data.press_str); //
+    bmp280_timer=millis+bmp280_rate;            //
   }
 
   if (millis >= adxl345_timer)
   {
-    get_acsel(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);
-    send_adxl_package(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);
-    adxl345_timer=millis+adxl345_rate;
+    get_acsel(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);          //
+    send_adxl_package(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);  //
+    adxl345_timer=millis+adxl345_rate;                                                    //
   }
 
   if (millis >= gps_timer)
   {
-    get_GPS_data(ecologist_data.gps_lon, ecologist_data.gps_lat);
-    send_GPS_package(ecologist_data.gps_lon, ecologist_data.gps_lat);
-    gps_timer=millis+gps_rate;
-  }
+    get_GPS_data(ecologist_data.gps_lon, ecologist_data.gps_lat);     //
+    send_GPS_package(ecologist_data.gps_lon, ecologist_data.gps_lat); //
+    gps_timer=millis+gps_rate;                                        //
+  } 
 
   if (millis >= co2_timer)
   {
-    get_MH_Z14A_data(ecologist_data.CO2_ppm);
-    send_CO2_package(ecologist_data.CO2_ppm);
-    co2_timer=millis+co2_rate;
+    get_MH_Z14A_data(ecologist_data.CO2_ppm);     //
+    send_CO2_package(ecologist_data.CO2_ppm);     //
+    co2_timer=millis+co2_rate;                    //
   }
   if (millis >= o2_timer)
   {
-    get_O2_percent(ecologist_data.O2_percent);
-    send_O2_package(ecologist_data.O2_percent);
-    o2_timer=millis+o2_rate;
+    get_O2_percent(ecologist_data.O2_percent);    //
+    send_O2_package(ecologist_data.O2_percent);   //
+    o2_timer=millis+o2_rate;                      //
   }
   
 
   if (millis >= gaz_x3_timer)
   {
-    get_3_gas_value(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);
-    send_3_gas_package(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);
-    gaz_x3_timer=millis+gaz_x3_rate;
+    get_3_gas_value(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);     //
+    send_3_gas_package(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);  //
+    gaz_x3_timer=millis+gaz_x3_rate;                                                            //
   }
   if (millis >= rad_timer)
   {
-    get_Radiation_value(ecologist_data.radiation);
-    send_radiation_package(ecologist_data.radiation);
-    rad_timer=millis+rad_rate;
+    get_Radiation_value(ecologist_data.radiation);      //
+    send_radiation_package(ecologist_data.radiation);   //
+    rad_timer=millis+rad_rate;                          //
   }
   ecologist_data.timer++;                                       // + 1 выполненный цикл
   ////////////////////////////////////////////////////
@@ -208,7 +216,7 @@ void loop()
 
 void rad_tick()
 {
-  counter++;
+  counter++;       //
 }
 
 boolean ds18b20_convert_t()
@@ -324,7 +332,7 @@ boolean send_O2_package(float O2)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
   radio.write(radio_pack, sizeof(radio_pack));
   return 1;
@@ -342,7 +350,7 @@ boolean send_ds18_package(float temp)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
   radio.write(radio_pack, sizeof(radio_pack));
   return 1;
@@ -360,7 +368,7 @@ boolean send_bmp_package(float pressur)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
   radio.write(radio_pack, sizeof(radio_pack));
   return 1;  
@@ -380,7 +388,7 @@ boolean send_adxl_package(int x_a, int y_a, int z_a)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
 
   radio.write(radio_pack, sizeof(radio_pack));
@@ -399,7 +407,7 @@ boolean send_CO2_package(int16_t Co2)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
   radio.write(radio_pack, sizeof(radio_pack));
   return 1;    
@@ -420,7 +428,7 @@ boolean send_3_gas_package(float co, float no2, float nh3)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
 
   radio.write(radio_pack, sizeof(radio_pack));
@@ -440,7 +448,7 @@ boolean send_GPS_package(float lon, float lat)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
 
   radio.write(radio_pack, sizeof(radio_pack));
@@ -460,7 +468,7 @@ boolean send_radiation_package(float rad_doze)
     crc_pckg+=radio_pack[i];
   }
   crc_pckg = ~crc_pckg;
-  memcpy(&radio_pack[15], &crc_pckg, sizeof(crc_pckg));
+  memcpy(&radio_pack[16], &crc_pckg, sizeof(crc_pckg));
   
 
   radio.write(radio_pack, sizeof(radio_pack));
