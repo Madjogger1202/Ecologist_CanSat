@@ -119,7 +119,7 @@ void setup() {
   pinMode(7, INPUT);                          //
   attachInterrupt(7, rad_tick, FALLING);      //
   //////////////////////////////////////////////
-  Serial.begin(9600);                         //  Инициируем UART0 9600 б/с.
+  Serial.begin(9600);                         //  Инициируем работу с аппаратной шиной UART для получения данных от GPS модуля на скорости 9600 бит/сек.
   gps.begin(Serial);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
   SPI.begin();                                // инициализируем работу с SPI
   SPI.setDataMode(SPI_MODE3);                 // насотройка SPI
