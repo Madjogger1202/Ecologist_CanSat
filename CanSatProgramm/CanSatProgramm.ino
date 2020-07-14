@@ -148,7 +148,7 @@ void loop()
   
   
   ////////////////////////////////////          ДЛЯ РАБОТЫ С ДАТЧИКОМ ТЕМПЕРАТУРЫ DS18B20
-  if (millis >= ds18b20_timer)      // 
+  if (millis() >= ds18b20_timer)      // 
   {                                 //  
    if (ecologist_data.timer != 0)   //  при первой итерации - пропускается блок снятия показаний, после чего посылается запрос на температуру (датчик не может мгновенно дать показания)
     {                               //                                                                                    |
@@ -160,55 +160,55 @@ void loop()
     }                               //                                                                                    |
     ds18b20_convert_t();            // <<|--------------------------------------------------------------------------------/
     send_ds18_package(ecologist_data.temp_str);
-    ds18b20_timer=millis+ds18b20_rate;//
+    ds18b20_timer=millis()+ds18b20_rate;//
   }                                 //
   ////////////////////////////////////
-  if (millis >= bmp280_timer)
+  if (millis() >= bmp280_timer)
   {
     get_pressure(ecologist_data.press_str);     //
     send_bmp_package(ecologist_data.press_str); //
-    bmp280_timer=millis+bmp280_rate;            //
+    bmp280_timer=millis()+bmp280_rate;            //
   }
 
-  if (millis >= adxl345_timer)
+  if (millis() >= adxl345_timer)
   {
     get_acsel(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);          //
     send_adxl_package(ecologist_data.x_str, ecologist_data.y_str, ecologist_data.z_str);  //
-    adxl345_timer=millis+adxl345_rate;                                                    //
+    adxl345_timer=millis()+adxl345_rate;                                                    //
   }
 
-  if (millis >= gps_timer)
+  if (millis() >= gps_timer)
   {
     get_GPS_data(ecologist_data.gps_lon, ecologist_data.gps_lat);     //
     send_GPS_package(ecologist_data.gps_lon, ecologist_data.gps_lat); //
-    gps_timer=millis+gps_rate;                                        //
+    gps_timer=millis()+gps_rate;                                        //
   } 
 
-  if (millis >= co2_timer)
+  if (millis() >= co2_timer)
   {
     get_MH_Z14A_data(ecologist_data.CO2_ppm);     //
     send_CO2_package(ecologist_data.CO2_ppm);     //
-    co2_timer=millis+co2_rate;                    //
+    co2_timer=millis()+co2_rate;                    //
   }
-  if (millis >= o2_timer)
+  if (millis() >= o2_timer)
   {
     get_O2_percent(ecologist_data.O2_percent);    //
     send_O2_package(ecologist_data.O2_percent);   //
-    o2_timer=millis+o2_rate;                      //
+    o2_timer=millis()+o2_rate;                      //
   }
   
 
-  if (millis >= gaz_x3_timer)
+  if (millis() >= gaz_x3_timer)
   {
     get_3_gas_value(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);     //
     send_3_gas_package(ecologist_data.CO_ppm, ecologist_data.NO2_ppm, ecologist_data.NH3_ppm);  //
-    gaz_x3_timer=millis+gaz_x3_rate;                                                            //
+    gaz_x3_timer=millis()+gaz_x3_rate;                                                            //
   }
-  if (millis >= rad_timer)
+  if (millis() >= rad_timer)
   {
     get_Radiation_value(ecologist_data.radiation);      //
     send_radiation_package(ecologist_data.radiation);   //
-    rad_timer=millis+rad_rate;                          //
+    rad_timer=millis()+rad_rate;                          //
   }
   ecologist_data.timer++;                                       // + 1 выполненный цикл
   ////////////////////////////////////////////////////
