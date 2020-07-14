@@ -210,7 +210,7 @@ void loop()
     send_radiation_package(ecologist_data.radiation);   //
     rad_timer=millis()+rad_rate;                          //
   }
-  ecologist_data.timer++;                                       // + 1 выполненный цикл
+  ecologist_data.timer = millis()/1000;                                       // + 1 выполненный цикл
   ////////////////////////////////////////////////////
 }
 
