@@ -15,7 +15,7 @@ enum data_id          //
   rad_id =    7       //  
 };
 
-struct all_data       //Создаем структуру
+struct all_data       // Создаем структуру
 {
   float temp_str;     // переменная для температуры
   float press_str;    // переменная для давления с барометра
@@ -30,7 +30,7 @@ struct all_data       //Создаем структуру
   float NO2_ppm;      //
   float NH3_ppm;      //
   float radiation;    //
-  uint32_t timer;    // переменная для подсчета выполненных циклов программы
+  uint32_t timer;     // переменная для подсчета выполненных циклов программы
 };
 all_data ecologist_data;     //
 
@@ -48,63 +48,67 @@ void setup()
   pinMode(test_3, INPUT_PULLUP);
   Serial.begin(115200);
   radio.begin();                                        // Инициируем работу nRF24L01+
-  radio.enableDynamicPayloads();
-  radio.setChannel(120);                                // Указываем канал приёма данных (от 0 до 127), 5 - значит приём данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
+//  radio.enableDynamicPayloads();
+  radio.setChannel(20);                                // Указываем канал приёма данных (от 0 до 127), 5 - значит приём данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
   radio.setDataRate     (RF24_2MBPS);                   // Указываем скорость передачи данных (RF24_250KBPS, RF24_1MBPS, RF24_2MBPS), RF24_1MBPS - 1Мбит/сек
-  radio.setPALevel      (RF24_PA_LOW);                 // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
-  radio.openReadingPipe (1, 0x1234567899LL);            // Открываем 1 трубу с идентификатором 0x1234567890 для приема данных (на ожном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)
+  radio.setPALevel      (RF24_PA_HIGH);                 // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
+  radio.openReadingPipe (1, 0xE7E7E2E7E7);            // Открываем 1 трубу с идентификатором 0x1234567890 для приема данных (на ожном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)
   radio.startListening  ();                             // Включаем приемник, начинаем прослушивать открытую трубу
 }
 void loop()
 {
   if (radio.available())
   {
-    buf_size = radio.getDynamicPayloadSize();
+    //Serial.print(222);
+    buf_size = 18;
     boolean valid;
     int16_t sum;
+    int mode = (!digitalRead(3))*4 + (!digitalRead(4))*2+!digitalRead(5);
+    Serial.println(mode);
     int8_t data_recieve[buf_size];
     radio.read(&data_recieve, sizeof(data_recieve));    // читаем данные и указываем сколько байт читать
-    for(int i =0; i<17; i++)
-    sum+=data_recieve[i];
-    sum=~sum;
-    if(!(sum == data_recieve[17])) return;
-    
+//    for(int i =0; i<17; i++)
+//    sum+=data_recieve[i];
+//    sum=~sum;
+ //   if(!(sum == data_recieve[17])) return;
+    Serial.println(data_recieve[0]);
     switch (data_recieve[0])
     {
       case 0: 
       memcpy(&ecologist_data.temp_str, &data_recieve[1], sizeof(&ecologist_data.temp_str));
-      
+      break;
       case 1: 
       memcpy(&ecologist_data.press_str, &data_recieve[1], sizeof(&ecologist_data.press_str));
-
+      Serial.println(data_recieve[1]+data_recieve[2]+data_recieve[3]+data_recieve[4]);
+      break;
       case 2: 
       memcpy(&ecologist_data.x_str, &data_recieve[1], sizeof(&ecologist_data.x_str));
       memcpy(&ecologist_data.y_str, &data_recieve[1+sizeof(ecologist_data.x_str)], sizeof(&ecologist_data.y_str));
       memcpy(&ecologist_data.z_str, &data_recieve[1+sizeof(ecologist_data.x_str)+sizeof(ecologist_data.y_str)], sizeof(&ecologist_data.z_str));
-
+      break;
       case 3: 
       memcpy(&ecologist_data.gps_lon, &data_recieve[1], sizeof(&ecologist_data.gps_lon));
       memcpy(&ecologist_data.gps_lat, &data_recieve[1+sizeof(ecologist_data.gps_lon)], sizeof(&ecologist_data.gps_lat));
-
+      break;
       case 4: 
       memcpy(&ecologist_data.CO2_ppm, &data_recieve[1], sizeof(&ecologist_data.CO2_ppm));      
-
+      break;
       case 5: 
       memcpy(&ecologist_data.O2_percent, &data_recieve[1], sizeof(&ecologist_data.O2_percent));
-
+      break;
       case 6: 
       memcpy(&ecologist_data.CO_ppm, &data_recieve[1], sizeof(&ecologist_data.CO_ppm));
       memcpy(&ecologist_data.NO2_ppm, &data_recieve[1+sizeof(ecologist_data.CO_ppm)], sizeof(&ecologist_data.NO2_ppm));
       memcpy(&ecologist_data.NH3_ppm, &data_recieve[1+sizeof(ecologist_data.CO_ppm)+sizeof(ecologist_data.y_str)], sizeof(&ecologist_data.NH3_ppm));
-
+      break;
       case 7: 
       memcpy(&ecologist_data.radiation, &data_recieve[1], sizeof(&ecologist_data.radiation));
-
+      break;
       
     }
+    Serial.println(76);
 
 
-    int mode = (!digitalRead(3))*4 + (!digitalRead(4))*2+!digitalRead(5);
     switch(mode)
     {
       case 0:
@@ -139,14 +143,17 @@ void loop()
         Serial.println("");
         Serial.println("");
         Serial.println("");
+        break;
       case 1:
         Serial.print("$");
         Serial.print(ecologist_data.temp_str);
         Serial.print(";");
+        break;
       case 2:
         Serial.print("$");
         Serial.print(ecologist_data.press_str);
         Serial.print(";");
+        break;
       case 3:
         Serial.print("$");
         Serial.print(ecologist_data.x_str);
@@ -155,6 +162,7 @@ void loop()
         Serial.print(" ");
         Serial.print(ecologist_data.x_str);
         Serial.print(";");
+        break;
       case 4: 
         Serial.print("GPS lat , lon   ");
         Serial.print(ecologist_data.gps_lat);
@@ -168,10 +176,12 @@ void loop()
         Serial.println("");
         Serial.println("");
         Serial.println("");
+        break;
       case 5:
         Serial.print("$");
         Serial.print(ecologist_data.CO2_ppm);
         Serial.print(";");
+        break;
     }
    }
 }

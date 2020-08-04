@@ -27,7 +27,7 @@ public:
 		uint16_t base_NH3,
 		uint16_t base_RED,
 		uint16_t base_OX);
-
+void get_calib(uint16_t &base_CO, uint16_t &base_NO2, uint16_t &base_NH3);
 	float measure(gas_t gas);
 
 	uint16_t getResistance    (channel_t channel) const;

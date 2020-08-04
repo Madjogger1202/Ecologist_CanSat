@@ -1,0 +1,196 @@
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="docid">
+    <name>doc name</name>
+    <description>doc description</description>
+    <visibility>1</visibility>
+    <Style id="TheStyle">
+      <PolyStyle>
+        <color>ccccccaa</color>
+        <fill>1</fill>
+        <outline>0</outline>
+      </PolyStyle>
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+    <Folder id="fid">
+      <name>f name</name>
+      <description>f description</description>
+      <visibility>1</visibility>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.822908,55.916428,120.000000 37.824129,55.914127,160.000000 37.824129,55.914127,0.000000 37.822908,55.916428,0.000000 37.822908,55.916428,120.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.824129,55.914127,160.000000 37.822242,55.912509,200.000000 37.822242,55.912509,0.000000 37.824129,55.914127,0.000000 37.824129,55.914127,160.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.822242,55.912509,200.000000 37.818246,55.911701,300.000000 37.818246,55.911701,0.000000 37.822242,55.912509,0.000000 37.822242,55.912509,200.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.818246,55.911701,300.000000 37.813723,55.915449,200.000000 37.813723,55.915449,0.000000 37.818246,55.911701,0.000000 37.818246,55.911701,300.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.813723,55.915449,200.000000 37.821216,55.917735,180.000000 37.821216,55.917735,0.000000 37.813723,55.915449,0.000000 37.813723,55.915449,200.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.821216,55.917735,180.000000 37.825822,55.915231,160.000000 37.825822,55.915231,0.000000 37.821216,55.917735,0.000000 37.821216,55.917735,180.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.825822,55.915231,160.000000 37.824351,55.912152,150.000000 37.824351,55.912152,0.000000 37.825822,55.915231,0.000000 37.825822,55.915231,160.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.824351,55.912152,150.000000 37.818385,55.910643,140.000000 37.818385,55.910643,0.000000 37.824351,55.912152,0.000000 37.824351,55.912152,150.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.818385,55.910643,140.000000 37.815444,55.913007,110.000000 37.815444,55.913007,0.000000 37.818385,55.910643,0.000000 37.818385,55.910643,140.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.815444,55.913007,110.000000 37.812058,55.913427,90.000000 37.812058,55.913427,0.000000 37.815444,55.913007,0.000000 37.815444,55.913007,110.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="id">
+        <name>name</name>
+        <description>description</description>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <Polygon>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <altitudeMode>relativeToGround</altitudeMode>
+              <coordinates>37.812058,55.913427,90.000000 37.811670,55.915029,50.000000 37.811670,55.915029,0.000000 37.812058,55.913427,0.000000 37.812058,55.913427,90.000000</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark>
+        <visibility>1</visibility>
+        <styleUrl>#TheStyle</styleUrl>
+        <LineString>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <coordinates>37.822908,55.916428,120.000000 37.824129,55.914127,160.000000 37.822242,55.912509,200.000000 37.818246,55.911701,300.000000 37.813723,55.915449,200.000000 37.821216,55.917735,180.000000 37.825822,55.915231,160.000000 37.824351,55.912152,150.000000 37.818385,55.910643,140.000000 37.815444,55.913007,110.000000 37.812058,55.913427,90.000000 37.811670,55.915029,50.000000</coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>
