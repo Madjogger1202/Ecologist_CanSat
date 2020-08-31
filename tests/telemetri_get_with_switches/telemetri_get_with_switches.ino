@@ -13,7 +13,7 @@ struct telemetry_p1       //Создаем структуру
   int16_t z_str;           ////////////////////////////////////////////////
   float gps_lat;
   float gps_lon;
-  float trash2;
+  float GPStime;
   uint32_t timer;      // переменная для подсчета выполненных циклов программы
 } data_1, rec_data;
 
@@ -22,7 +22,7 @@ struct telemetry_p2    //Создаем структуру
   bool id = 1;
   float O2_percent;
   float CO_ppm;
-  int trash1;
+  int GPSaltit;
   int8_t MH_Z14A_temp; // переменная для хранения температуры с датчика СО2
   int16_t CO2_ppm;     // переменная для хранения значения CO2 в ppm
   float NO2_ppm;
@@ -63,7 +63,7 @@ void loop()
         data_2.NO2_ppm = rec_data.gps_lat;
         data_2.NH3_ppm = rec_data.gps_lon;
         data_2.timer = rec_data.timer;
-        data_2.rad = rec_data.trash2;
+        data_2.rad = rec_data.GPStime;
       }
       else
       {

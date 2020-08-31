@@ -39,6 +39,8 @@ float FLAT, FLON, ALT;
 
 int x, y, z;                            // переменные для ускорений по 3 осям
 
+bool buzz;
+
 struct telemetry_p1       //Создаем структуру
 {
   bool id = 0;
@@ -191,47 +193,52 @@ void loop()
     data_1.timer++;
     data_2.timer++;                                       // + 1 выполненный цикл
     radio_timer = millis()/100 + 2;
-  File allData = SD.open("Ec.csv", FILE_WRITE);
+    if(buzz)
+    {
+      tone(5, 2000);
+    }
+    buzz = !buzz;
+    File allData = SD.open("Eco.csv", FILE_WRITE);
     if (allData)
-  {
+    {
     
-    allData.print(data_1.GPStime);
-    allData.print(";");
-    allData.print(data_2.GPSaltit);
-    allData.print(";");
-    allData.print(data_1.gps_lat, 7);
-    allData.print(";");
-    allData.print(data_1.gps_lon, 7);
-    allData.print(";");
-    allData.print(data_1.press_str);
-    allData.print(";");
-    allData.print(data_1.temp_str);
-    allData.print(";");
-    allData.print(data_1.x_str);
-    allData.print(";");
-    allData.print(data_1.y_str);
-    allData.print(";");
-    allData.print(data_1.z_str);
-    allData.print(";");
-    allData.print(data_2.O2_percent);
-    allData.print(";");
-    allData.print(data_2.CO2_ppm);
-    allData.print(";");
-    allData.print(data_2.CO_ppm);
-    allData.print(";");
-    allData.print(data_2.NO2_ppm);
-    allData.print(";");
-    allData.print(data_2.NH3_ppm);
-    allData.print(";");
-    allData.print(data_2.rad);
-    allData.print(";");
-    allData.print(data_2.timer);
-    allData.print(";");
-    allData.println(millis()/1000);
-    allData.close();
-  }
-  else
-  {
+      allData.print(data_1.GPStime);
+      allData.print(";");
+      allData.print(data_2.GPSaltit);
+      allData.print(";");
+      allData.print(data_1.gps_lat, 7);
+      allData.print(";");
+      allData.print(data_1.gps_lon, 7);
+      allData.print(";");
+      allData.print(data_1.press_str);
+      allData.print(";");
+      allData.print(data_1.temp_str);
+      allData.print(";");
+      allData.print(data_1.x_str);
+      allData.print(";");
+      allData.print(data_1.y_str);
+      allData.print(";");
+      allData.print(data_1.z_str);
+      allData.print(";");
+      allData.print(data_2.O2_percent);
+      allData.print(";");
+      allData.print(data_2.CO2_ppm);
+      allData.print(";");
+      allData.print(data_2.CO_ppm);
+      allData.print(";");
+      allData.print(data_2.NO2_ppm);
+      allData.print(";");
+      allData.print(data_2.NH3_ppm);
+      allData.print(";");
+      allData.print(data_2.rad);
+      allData.print(";");
+      allData.print(data_2.timer);
+      allData.print(";");
+      allData.println(millis()/1000);
+      allData.close();
+    }
+    else
+    {
       tone(5, 701);
       delay(10);
       tone(5, 500);
@@ -243,7 +250,7 @@ void loop()
       tone(5, 500);
       delay(50);
       noTone(5);
-  }
+    }
   }
   ////////////////////////////////////////////////////
   
@@ -328,10 +335,27 @@ boolean get_Radiation_value(float &doze)
   return 1;
 }
 
-boolean get_3_gas_value(float &CO_val, float &NO2_val, float &NH3_val)
+boolean get_3_gas_value(float &COv, float &NO2v, float &NH3v)
 {
-  CO_val = gas.measure(CO);
-  NO2_val = gas.measure(NO2);
-  NH3_val = gas.measure(NH3);
-  return 0; 
+   unsigned long COrs;
+   unsigned long NO2rs;
+   unsigned long NH3rs;
+   for(int i = 0; i< 100; i++)
+   {
+      COrs += analogRead(PIN_CO);
+      NO2rs += analogRead(PIN_NO2);
+      NH3rs += analogRead(PIN_NH3);
+      delay(2);
+   }
+   float ratio;
+   float cor;
+   float no2r;
+   float nh3r;
+   cor = COrs/13*(1023-13)/(1024 - COrs);
+   no2r = NO2rs/13*(1023-13)/(1024 - NO2rs);
+   nh3r = NH3rs/13*(1023-13)/(1024 - NH3rs);      
+   COv = pow(cor, -1.179)*4.385;
+   NO2v = pow(no2r, 1.007)/6.855;
+   NH3v = pow(nh3r, -1.67)/1.47;
+   return 0;
 }
