@@ -82,6 +82,8 @@ long int gaz_x3_timer =  0 ;                                         //
 long int rad_timer =     0 ;                                         //
 long int radio_timer =     0 ;                                         //
 
+int gas_turn;
+
 void setup() {
   pinMode(46, INPUT_PULLUP);
   pinMode(47, INPUT_PULLUP);
@@ -134,17 +136,38 @@ void loop()
     ds18b20_convert_t();            // <<|--------------------------------------------------------------------------------/
   }                                 //
   ////////////////////////////////////
-  if(millis()/100 >= gaz_x3_timer)
-  {
-    get_3_gas_value(data_2.CO_ppm, data_2.NO2_ppm, data_2.NH3_ppm);   
-    gaz_x3_timer = millis()/100 + 100;
-  }
+//  if(millis()/100 >= gaz_x3_timer)
+//  {
+//    get_3_gas_value(data_2.CO_ppm, data_2.NO2_ppm, data_2.NH3_ppm);   
+//    gaz_x3_timer = millis()/100 + 100;
+//  }
 
-  if(millis()/100 >= o2_timer)
+  if((millis()/100 >= o2_timer)&&(!gas_turn))
   {
     get_O2_percent(data_2.O2_percent);
-    o2_timer = millis()/100 + 20;
+    o2_timer = millis()/100 + 10;
   }
+  
+  if((millis()/100 >= gaz_x3_timer)&&(gas_turn))
+  {
+    if(gas_turn == 1)
+    {
+      data_2.CO_ppm = gas.measure(CO);
+    }
+    else if(gas_turn == 2)
+    {
+      data_2.NO2_ppm = gas.measure(NO2);
+    }
+    else
+    {
+      data_2.NH3_ppm = gas.measure(NH3);
+    }
+    gaz_x3_timer = millis()/100 + 3;
+    if(gas_turn != 3)gas_turn++;
+    else gas_turn=0;
+    
+  }
+
   if(millis()/100>=adxl345_timer)
   {
     adxl.readAccel(&x, &y, &z);                         // запись значений для ускорений в указанные переменные
@@ -188,6 +211,7 @@ void loop()
   
   if((millis()/100) >= radio_timer )
   {
+  
     radio.write(&data_1, sizeof(data_1));                 // отправка в эфир пакета данных
     radio.write(&data_2, sizeof(data_2));                 // отправка в эфир пакета данных
     data_1.timer++;
@@ -321,10 +345,10 @@ boolean get_O2_percent(float &O2)
   for (unsigned char i = 64;i > 0;i--)
   {
     sum = sum + analogRead(PIN_O2);
-    delay(1);
+    delayMicroseconds(250);
   }
   sum = sum >> 6;
-  O2 = sum / 9.07;
+  O2 = sum / 9.27;
   return 1;
 }
 
