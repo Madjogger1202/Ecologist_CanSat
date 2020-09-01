@@ -158,28 +158,26 @@ uint16_t MICS6814 :: getResistance (channel_t channel) const
 	case CH_CO:
 		for (int i = 0; i <300; i ++)
 		{
-			rs += analogRead (_pinCO);
+			rs += analogRead (_pinCO)/3;
 			counter ++;
 			delayMicroseconds(300);
 		}
-    rs/=3;
 	case CH_NO2:
 		for (int i = 0; i <300; i ++)
 		{
-			rs += analogRead (_pinNO2);
+			rs += analogRead (_pinNO2)/3;
 			counter ++;
 			delayMicroseconds(300);
 		}
-    rs/=3;
  	case CH_NH3:
 		for (int i = 0; i <300; i ++)
 		{
-			rs += analogRead (_pinNH3);
+			rs += analogRead (_pinNH3)/3;
 			counter ++;
 			delayMicroseconds(300);
       
 		}
-    rs/=3;
+    
 	}
 
 	return counter!= 0? rs / counter: 0;

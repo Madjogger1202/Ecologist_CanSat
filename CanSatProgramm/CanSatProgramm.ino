@@ -7,9 +7,9 @@
 #define Sd_pin 41                       // пин chip select для SD карты
 #define MH_Z14A_PWM 18                  // пин для ШИМ датчика СО2
 #define PIN_O2  A0                      // пин для датчика О2
-#define PIN_CO  46                      // пин для датчика CО
-#define PIN_NO2 47                      // пин для датчика NО2
-#define PIN_NH3 48                      // пин для датчика NH3
+#define PIN_CO  A1                      // пин для датчика CО
+#define PIN_NO2 A2                      // пин для датчика NО2
+#define PIN_NH3 A3                      // пин для датчика NH3
 
 #define OW_SKIP_ROM 0xCC                // Пропуск этапа адресации на шине 
 #define OW_DS18B20_CONVERT_T 0x44       // Команда на начало замера
@@ -20,8 +20,9 @@
 
 #include <SD.h>
 #include "MICS6814.h"
-#include <iarduino_GPS_NMEA.h>                    //  Подключаем библиотеку для расшифровки строк протокола NMEA получаемых по UART.
-iarduino_GPS_NMEA gps; 
+//#include <iarduino_GPS_NMEA.h>                    //  Подключаем библиотеку для расшифровки строк протокола NMEA получаемых по UART.
+//iarduino_GPS_NMEA gps; 
+#include <TinyGPS.h> 
 #include <OneWire.h>
 #include <string.h>  // для memcpy
 #include <stdint.h>  // для int8_t, uint8_t и т.п.
@@ -35,11 +36,16 @@ Adafruit_BMP280 bmp(Pressure_pin);      // создаём объект bmp дл�
 OneWire  ds(36);                        // создаём объект ds для работы с термометром
 ADXL345 adxl = ADXL345(Acsel_pin);      // создаём объект ADXL345 для работы с акселерометром
 MICS6814 gas(PIN_CO, PIN_NO2, PIN_NH3);
+TinyGPS gps;
 float FLAT, FLON, ALT;
 
 int x, y, z;                            // переменные для ускорений по 3 осям
 
 bool buzz;
+
+volatile unsigned long co2_th;
+volatile unsigned long co2_tl;
+volatile int cntr_co2;
 
 struct telemetry_p1       //Создаем структуру
 {
@@ -84,7 +90,10 @@ long int radio_timer =     0 ;                                         //
 
 int gas_turn;
 
-void setup() {
+int CO2_timer;
+
+void setup() { 
+ 
   pinMode(46, INPUT_PULLUP);
   pinMode(47, INPUT_PULLUP);
   pinMode(48, INPUT_PULLUP);
@@ -96,9 +105,10 @@ void setup() {
   pinMode(7, INPUT);                          //
   attachInterrupt(7, rad_tick, FALLING);      //
   //////////////////////////////////////////////
+  attachInterrupt(0, Co2_t, CHANGE);  
   pinMode(18, INPUT);
   Serial.begin(9600);                         //  Инициируем работу с аппаратной шиной UART для получения данных от GPS модуля на скорости 9600 бит/сек.
-  gps.begin(Serial);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
+  //gps.begin(Serial);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
   SPI.begin();                                               // инициализируем работу с SPI
   SPI.setDataMode(SPI_MODE3);                                // насотройка SPI
   delay(100);  
@@ -117,7 +127,8 @@ void setup() {
 
   adxl.powerOn();                     // вывод датчика из режима пониженного энергопотребления (на случай, если он был случайно включён)
   adxl.setRangeSetting(16);           // настройка чувствительности (макс - 16)
-  delay(1000);                     
+  delay(1000);   
+  get_MH_Z14A_data(data_2.CO2_ppm);               
 }
 void loop()
 {
@@ -146,6 +157,7 @@ void loop()
   {
     get_O2_percent(data_2.O2_percent);
     o2_timer = millis()/100 + 10;
+    gas_turn++;
   }
   
   if((millis()/100 >= gaz_x3_timer)&&(gas_turn))
@@ -162,7 +174,7 @@ void loop()
     {
       data_2.NH3_ppm = gas.measure(NH3);
     }
-    gaz_x3_timer = millis()/100 + 3;
+    gaz_x3_timer = millis()/100 + 1;
     if(gas_turn != 3)gas_turn++;
     else gas_turn=0;
     
@@ -174,33 +186,37 @@ void loop()
     data_1.x_str = x;                                   /////////////////////////////////////////////////////////////
     data_1.y_str = y;                                   //   запись в структурную переменную телеметрии ускорений  //
     data_1.z_str = z;                                   /////////////////////////////////////////////////////////////
-    adxl345_timer = millis()/100 + 2;
+    adxl345_timer = millis()/100 + 1;
   }
 
   if(millis()/100>=bmp280_timer)
   {
     data_1.press_str = bmp.readPressure();              //
-    bmp280_timer = millis()/100 +10;
+    bmp280_timer = millis()/100 +2;
   }
 
-  if(millis()/100 >= co2_timer)
+  if((millis()/100 >= co2_timer)&&(millis()%CO2_timer)>= 800 )
   {
     get_MH_Z14A_data(data_2.CO2_ppm);// получение данных с датчика CO2
-    co2_timer = millis()/100 +10;
+   co2_timer = millis()/100 + 2;
   }
 
   if(millis()/100 >= gps_timer)
-  {
-    gps.read(); 
-    if(gps.errPos){}
+  { 
+    if(!readgps()){}
     else 
     {
-      data_1.gps_lat = gps.latitude;
-      data_1.gps_lon = gps.longitude;                          
-      data_2.GPSaltit = gps.altitude;
-      data_1.GPStime = gps.seconds + 100*gps.minutes + 10000*gps.Hours;
+     unsigned long aG; 
+      gps.f_get_position(&data_1.gps_lat, &data_1.gps_lon, &aG);
+      unsigned long timeee;
+      unsigned long dateee;
+      gps.get_datetime(&dateee,&timeee, &aG);
+    //  data_1.gps_lat = gps.latitude;
+    //  data_1.gps_lon = gps.longitude;                          
+      data_2.GPSaltit = gps.f_altitude();
+      data_1.GPStime = float(timeee);
     }
-    gps_timer = millis()/100 + 20;
+    gps_timer = millis()/100 + 5;
   }
 
   if(millis()/100 >= rad_timer)
@@ -216,7 +232,7 @@ void loop()
     radio.write(&data_2, sizeof(data_2));                 // отправка в эфир пакета данных
     data_1.timer++;
     data_2.timer++;                                       // + 1 выполненный цикл
-    radio_timer = millis()/100 + 2;
+    radio_timer = millis()/100 + 1;
     if(buzz)
     {
       tone(5, 2000);
@@ -264,15 +280,15 @@ void loop()
     else
     {
       tone(5, 701);
-      delay(10);
+   //   delay(10);
       tone(5, 500);
-      delay(50);
+   //   delay(50);
       noTone(5);
-      delay(100);
+   //   delay(100);
       tone(5, 701);
-      delay(10);
+   //   delay(10);
       tone(5, 500);
-      delay(50);
+ //     delay(50);
       noTone(5);
     }
   }
@@ -326,15 +342,30 @@ bool ds18b20_read_t(float & temperatur)
 
 boolean get_MH_Z14A_data(int16_t &ppm)
 {
-  unsigned long th, tl, tmr;
-  tmr = millis()/100;
-  do {
-    th = pulseIn(18, HIGH, 1004000) / 1000;
-    tl = 1004 - th;
-    ppm =  5000 * (th-2)/(th+tl-4); // расчёт для диапазона от 0 до 5000ppm
-    if(millis()/100-tmr >= 3000)return 0; 
-  } while (th == 0);
+  unsigned long tl;
+  //tmr = millis()/100;
+ // do {
+  //  th = pulseIn(18, HIGH, 1004000) / 1000;
+  //  if(data_2.timer ==0)
+   // CO2_timer = millis();
+    tl = 1004 - (co2_tl-co2_th);
+    ppm =  5000 * ((co2_tl-co2_th)-2)/((co2_tl-co2_th)+tl-4); // расчёт для диапазона от 0 до 5000ppm 
+  //} while (th == 0);
 
+}
+void Co2_t()
+{
+  if((cntr_co2%3 == 0))
+  if(digitalRead(6))
+  {
+    co2_th=millis();
+    cntr_co2 = 3;
+  }
+  else
+  {
+    co2_tl=millis();
+    cntr_co2++;
+  }
 }
 
 boolean get_O2_percent(float &O2)
@@ -382,4 +413,18 @@ boolean get_3_gas_value(float &COv, float &NO2v, float &NH3v)
    NO2v = pow(no2r, 1.007)/6.855;
    NH3v = pow(nh3r, -1.67)/1.47;
    return 0;
+}
+
+bool readgps()
+{
+while (Serial.available())
+{
+char b = Serial.read();
+if('\r' != b)
+{
+if (gps.encode(b))
+ return true;
+}
+}
+return false;
 }

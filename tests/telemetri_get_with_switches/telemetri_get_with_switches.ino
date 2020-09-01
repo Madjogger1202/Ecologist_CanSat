@@ -68,33 +68,33 @@ void loop()
       else
       {
           data_1 = rec_data;        
-      }
+      
       
       
       
       if(!digitalRead(test_1))
       {
-      Serial.print("$");
+  //    Serial.print("$");
       Serial.println(data_1.press_str); // в паскалях
-      Serial.print(";");
+ //     Serial.print(";");
       }
       else if(!digitalRead(test_2))
       {
-      Serial.print("$");
+  //    Serial.print("$");
       Serial.println(data_1.temp_str); // в градусах 
-      Serial.println(" "); 
+   //   Serial.println(" "); 
 //      Serial.println(data_1.bmp_temp_str); // в градусах
-      Serial.print(";");
+  //    Serial.print(";");
       }
       else if(!digitalRead(test_3))
       {
-      Serial.print("$");
-      Serial.println(data_1.x_str/3.26197); // в м/с2 
-      Serial.println(" "); 
-      Serial.println(data_1.y_str/3.26197); // в м/с2 
-      Serial.println(" "); 
+    //  Serial.print("$");
+      Serial.print(data_1.x_str/3.26197); // в м/с2 
+      Serial.print(","); 
+      Serial.print(data_1.y_str/3.26197); // в м/с2 
+      Serial.print(","); 
       Serial.println(data_1.z_str/3.26197); // в м/с2 
-      Serial.print(";");
+   //   Serial.print(";");
 
       }
       else
@@ -133,6 +133,6 @@ void loop()
        Serial.println("");
        Serial.println("");
                  
-      }
+      }}
     }
 }
