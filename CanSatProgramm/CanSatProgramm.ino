@@ -43,8 +43,8 @@ int x, y, z;                            // переменные для уско�
 
 bool buzz;
 
-volatile unsigned long co2_th;
-volatile unsigned long co2_tl;
+volatile unsigned long long co2_th;
+volatile unsigned long long co2_tl;
 volatile int cntr_co2;
 
 struct telemetry_p1       //Создаем структуру
@@ -105,8 +105,11 @@ void setup() {
   pinMode(7, INPUT);                          //
   attachInterrupt(7, rad_tick, FALLING);      //
   //////////////////////////////////////////////
-  attachInterrupt(0, Co2_t, CHANGE);  
   pinMode(18, INPUT);
+  attachInterrupt(0, Co2_th, RISING);  
+  pinMode(19, INPUT);
+  attachInterrupt(1, Co2_tl, FALLING);  
+
   Serial.begin(9600);                         //  Инициируем работу с аппаратной шиной UART для получения данных от GPS модуля на скорости 9600 бит/сек.
   //gps.begin(Serial);                          //  Инициируем расшифровку строк NMEA указав объект используемой шины UART.
   SPI.begin();                                               // инициализируем работу с SPI
@@ -233,10 +236,6 @@ void loop()
     data_1.timer++;
     data_2.timer++;                                       // + 1 выполненный цикл
     radio_timer = millis()/100 + 1;
-    if(buzz)
-    {
-      tone(5, 2000);
-    }
     buzz = !buzz;
     File allData = SD.open("Eco.csv", FILE_WRITE);
     if (allData)
@@ -280,9 +279,9 @@ void loop()
     else
     {
       tone(5, 701);
-   //   delay(10);
+      delay(50);
       tone(5, 500);
-   //   delay(50);
+      delay(50);
       noTone(5);
    //   delay(100);
       tone(5, 701);
@@ -343,29 +342,26 @@ bool ds18b20_read_t(float & temperatur)
 boolean get_MH_Z14A_data(int16_t &ppm)
 {
   unsigned long tl;
+  unsigned long th;
   //tmr = millis()/100;
  // do {
   //  th = pulseIn(18, HIGH, 1004000) / 1000;
   //  if(data_2.timer ==0)
    // CO2_timer = millis();
-    tl = 1004 - (co2_tl-co2_th);
-    ppm =  5000 * ((co2_tl-co2_th)-2)/((co2_tl-co2_th)+tl-4); // расчёт для диапазона от 0 до 5000ppm 
+  th = co2_tl/1000 ;
+  tl = 1004 - th;
+  ppm =  5000 * (th-2)/(th+tl-4); // расчёт для диапазона от 0 до 5000ppm 
+  //ppm = th;
   //} while (th == 0);
 
 }
-void Co2_t()
+void Co2_th()
 {
-  if((cntr_co2%3 == 0))
-  if(digitalRead(6))
-  {
-    co2_th=millis();
-    cntr_co2 = 3;
-  }
-  else
-  {
-    co2_tl=millis();
-    cntr_co2++;
-  }
+  co2_th=micros();
+}
+void Co2_tl()
+{
+  co2_tl=micros()-co2_th;
 }
 
 boolean get_O2_percent(float &O2)
