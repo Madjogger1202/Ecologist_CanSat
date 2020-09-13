@@ -118,7 +118,7 @@ void setup() {
   radio.begin();                                             // Инициируем работу nRF24L01+
   radio.setChannel(120);                                     // Указываем канал передачи данных (от 0 до 127), 5 - значит передача данных осуществляется на частоте 2,405 ГГц (на одном канале может быть только 1 приёмник и до 6 передатчиков)
   radio.setDataRate(RF24_2MBPS);                           // Указываем скорость передачи данных (RF24_250KBPS, RF24_1MBPS, RF24_2MBPS), RF24_1MBPS - 1Мбит/сек
-  radio.setPALevel(RF24_PA_HIGH);                            // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
+  radio.setPALevel(RF24_PA_MAX);                            // Указываем мощность передатчика (RF24_PA_MIN=-18dBm, RF24_PA_LOW=-12dBm, RF24_PA_HIGH=-6dBm, RF24_PA_MAX=0dBm)
   radio.openWritingPipe(0x1234567899LL);                     // Открываем трубу с идентификатором 0x1234567899LL для передачи данных (на одном канале может быть открыто до 6 разных труб, которые должны отличаться только последним байтом идентификатора)
   gas.loadCalibrationData(12,12,12);
   bmp.begin();
@@ -348,9 +348,15 @@ boolean get_MH_Z14A_data(int16_t &ppm)
   //  th = pulseIn(18, HIGH, 1004000) / 1000;
   //  if(data_2.timer ==0)
    // CO2_timer = millis();
+
+  int16_t co2_last = data_2.CO2_ppm;
   th = co2_tl/1000 ;
   tl = 1004 - th;
   ppm =  5000 * (th-2)/(th+tl-4); // расчёт для диапазона от 0 до 5000ppm 
+  if(ppm<0)
+  {
+    ppm = co2_last;
+  }
   //ppm = th;
   //} while (th == 0);
 
@@ -381,7 +387,7 @@ boolean get_O2_percent(float &O2)
 
 boolean get_Radiation_value(float &doze)
 {
-  doze = counter;
+  doze = float(counter/1.25);
   counter = 0;
   return 1;
 }
