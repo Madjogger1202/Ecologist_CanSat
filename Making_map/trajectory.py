@@ -3,8 +3,8 @@ import fastkml
 from fastkml import kml
 from shapely.geometry import Polygon, LineString
 
-INPUT = 'input6.csv'
-OUTPUT = 'output4.kml'
+INPUT = 'input.csv'
+OUTPUT = 'output222.kml'
 
 stream = open(INPUT, mode="r")
 
